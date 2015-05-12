@@ -30,7 +30,7 @@ defmodule Fuego.Web do
       alias Fuego.Repo
       import Ecto.Model
       import Ecto.Query, only: [from: 2]
-
+      
       # Import URL helpers from the router
       import Fuego.Router.Helpers
     end

@@ -1,0 +1,5 @@
+<form action="<%= note_path(@conn, :create)%>" method="post">
+  <input type="hidden" name="_csrf_token" value="<%= get_csrf_token %>">
+  <input name="message" type="textbox">
+  <button type="submit">Create Note</button>
+</form>

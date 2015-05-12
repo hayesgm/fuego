@@ -1,0 +1,7 @@
+<div class="row">
+  <div class="col-lg-6">
+    <h4>Your note was created</h4>
+    <p>Share this link to view the note. <%= note_url(@conn, :show, @tkn) %></p>
+    <p>This can only be viewed once, even by you, so share carefully.</p>
+  </div>
+</div>
