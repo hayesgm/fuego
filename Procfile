@@ -1,0 +1,1 @@
+web: mix do compile --no-deps-check, phoenix.server --no-deps-check
