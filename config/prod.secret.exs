@@ -11,6 +11,10 @@ config :fuego, Fuego.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: {:system, "DATABASE_URL"}
 
-config :cqerl,
-  cassandra_nodes: Enum.map(String.split(System.get_env("CASSANDRA_NODES"), ","), fn ip -> [ip, 9042] end),
-  keyspace: "fuego_prod"
+case System.get_env("CASSANDRA_NODES") do
+  nodes when is_bitstring(nodes) ->
+    config :cqerl,
+      cassandra_nodes: Enum.map(String.split(nodes, ","), fn ip -> [ip, 9042] end),
+      keyspace: "fuego_prod"
+  _ -> Mix.shell.error("Failed to load Cassandra: no CASSANDRA_NODES specified...")
+end
