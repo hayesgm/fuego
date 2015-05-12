@@ -8,7 +8,7 @@ defmodule Fuego.NoteController do
   def create(conn, %{"message" => message}) do
     {:stowed, tkn} = Stow.put(:text, message)
 
-    render conn, "create.html", tkn: tkn
+    render conn, "create.html", tkn: tkn, message: message
   end
 
   def show(conn, %{"tkn" => tkn}) do
