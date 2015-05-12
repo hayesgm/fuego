@@ -1,1 +1,1 @@
-web: mix do compile --no-deps-check, phoenix.digest, phoenix.server --no-deps-check
+web: mix do compile --no-deps-check, phoenix.digest -o _build/prod/lib/fuego/priv/static/, phoenix.server --no-deps-check

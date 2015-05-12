@@ -7,7 +7,7 @@ use Mix.Config
 
 # Configures the endpoint
 config :fuego, Fuego.Endpoint,
-  url: [host: "burn.pm"],
+  url: [host: "dev.burn.pm"],
   root: Path.dirname(__DIR__),
   secret_key_base: "XlVeydd0yLgTKvs/IsvlbcOcilIUGMVVh0OL8bSpGTRz4E82gOxHB6JOCHH0Jo1s",
   debug_errors: false,
