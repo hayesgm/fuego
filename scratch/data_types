@@ -11,7 +11,7 @@ CREATE TABLE notes (
   message blob
 );
 
-INSERT INTO notes(tkn, type, message) VAUES (uuid(), 'text', 'hi mom');
+INSERT INTO notes(tkn, type, message) VALUES (uuid(), 'text', 'hi mom');
 
 ## Test
 
@@ -19,6 +19,19 @@ CREATE KEYSPACE fuego_test
 WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
 
 use fuego_test;
+
+CREATE TABLE notes (
+  tkn uuid PRIMARY KEY,
+  type text,
+  message blob
+);
+
+## Prod
+
+CREATE KEYSPACE fuego_prod
+WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 3 };
+
+use fuego_prod;
 
 CREATE TABLE notes (
   tkn uuid PRIMARY KEY,
