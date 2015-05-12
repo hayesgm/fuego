@@ -14,7 +14,7 @@ config :fuego, Fuego.Repo,
 case System.get_env("CASSANDRA_NODES") do
   nodes when is_bitstring(nodes) ->
     config :cqerl,
-      cassandra_nodes: Enum.map(String.split(nodes, ","), fn ip -> [ip, 9042] end),
+      cassandra_nodes: Enum.map(String.split(nodes, ","), fn ip -> {String.to_atom(ip), 9042} end),
       keyspace: "fuego_prod"
   _ -> Mix.shell.error("Failed to load Cassandra: no CASSANDRA_NODES specified...")
 end
