@@ -1,1 +1,1 @@
-web: mix do phoenix.digest --no-deps-check, compile --no-deps-check, phoenix.server --no-deps-check
+web: mix do compile --no-deps-check, phoenix.digest, phoenix.server --no-deps-check
