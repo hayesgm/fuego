@@ -18,6 +18,7 @@ defmodule Fuego.Router do
     get "/", PageController, :index
 
     post "/🔥", NoteController, :create
+    get "/🔥", NoteController, :new
     get "/🔥/:tkn", NoteController, :show
   end
 

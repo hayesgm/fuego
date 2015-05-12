@@ -3,7 +3,7 @@ defmodule Fuego.NoteControllerTest do
   alias Fuego.Stow
 
   test "POST note" do
-    conn = post conn(), "/note", %{message: "hello ma"}
+    conn = post conn(), "/🔥", %{message: "hello ma"}
     assert html_response(conn, 200) =~ "Your note was created"
   end
 

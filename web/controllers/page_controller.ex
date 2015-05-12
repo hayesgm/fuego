@@ -4,7 +4,7 @@ defmodule Fuego.PageController do
   plug :action
 
   def index(conn, _params) do
-    render conn, "index.html"
+    redirect conn, to: note_path(conn, :new)
   end
 
 end

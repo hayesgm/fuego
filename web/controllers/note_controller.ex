@@ -5,6 +5,10 @@ defmodule Fuego.NoteController do
   plug :no_bots
   plug :action
 
+  def new(conn, _params) do
+    render conn, "new.html"
+  end
+
   def create(conn, %{"message" => message}) do
     {:stowed, tkn} = Stow.put(:text, message)
 
