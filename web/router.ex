@@ -20,6 +20,7 @@ defmodule Fuego.Router do
     post "/🔥", NoteController, :create
     get "/🔥", NoteController, :new
     get "/🔥/:tkn", NoteController, :show
+    get "/🔥/:tkn/🔥", NoteController, :show
   end
 
   # Other scopes may use custom stacks.
