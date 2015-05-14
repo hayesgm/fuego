@@ -1,8 +1,56 @@
 import {Socket} from "phoenix"
 
-var PEER_JS_API_KEY = 'dx24ylo616y9zfr';
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
 
-var pc = new PeerConnection(configuration);
+Array.prototype.diff = function(a) {
+  return this.filter(function(i) {return a.indexOf(i) < 0;});
+};
+
+Object.values = obj => Object.keys(obj).map(key => obj[key]);
+
+function showDownload(name, largeObject) {
+  var downloadEl = document.querySelector('a#downloadEl');
+  downloadEl.href = URL.createObjectURL(new Blob(Object.values(largeObject)));
+  downloadEl.download = name;
+
+  var text = 'Click to download ' + name;
+
+  while (downloadEl.firstChild) {
+    downloadEl.removeChild(downloadEl.firstChild);
+  }
+
+  downloadEl.appendChild(document.createTextNode(text));
+  downloadEl.style.display = 'block';
+};
+
+var PEER_JS_API_KEY = 'dx24ylo616y9zfr';
+var peerId = guid();
+var peer = new Peer(peerId, {key: PEER_JS_API_KEY});
+var chunkSize = 16384;
+
+var veryLargeObject = {};
+var metaData = {};
+
+peer.on('connection', function(conn) {
+  conn.on('data', function(data){
+    console.log(data);
+    var pool = data[0];
+    var chunk = data[1];
+
+    console.log("Sending peer chunk: " + pool + ":" + chunk);
+    console.log(veryLargeObject[pool][chunk]);
+
+    conn.send([pool, chunk, veryLargeObject[pool][chunk]]);
+  });
+});
 
 var changeHash = function() {
   var pool = location.hash.slice(1);
@@ -13,21 +61,49 @@ var changeHash = function() {
   socket.connect()
   var chan = socket.chan("pool:" + pool, {client: true});
 
-  chan.on("offer_accepted", payload => {
-    payload.offer
-  });
-
   chan.join().receive("ok", response => {
     console.log("You are joinining...");
     console.log(response);
+    console.log(response.peers[0][0]);
+    veryLargeObject[pool] = {};
+    metaData[pool] = {
+      chunks: response.peers.map(chunkPeer => {return chunkPeer[0];}),
+      name: response.description
+    };
 
-    response.chunks.forEach(chunk => {
-    
-      pc.createOffer(offer => {
-        console.log(offer);
-        chan.push("find_peer_for_chunk", {pool: pool, chunk: chunk, offer: JSON.stringify(offer)});
+    console.log(["metadata",metaData[pool]]);
+
+    response.peers.forEach(chunkPeer => {
+      var chunk = chunkPeer[0];
+      var otherPeerId = chunkPeer[1];
+
+      console.log(['chunk', chunk, otherPeerId]);
+
+      var conn = peer.connect(otherPeerId);
+      conn.on('data', (data) => {
+        var pool = data[0];
+        var chunk = data[1];
+        var data = data[2];
+
+        veryLargeObject[pool][chunk] = data;
+
+        console.log("large object");
+        console.log(veryLargeObject);
+        
+        var missingChunks = metaData[pool].chunks.diff(Object.keys(veryLargeObject[pool]));
+        
+        trace("missing chunks", missingChunks)
+        if (missingChunks.length == 0) {
+          console.log("file complete, downloading...");
+
+          showDownload(metaData[pool].name, veryLargeObject[pool]);
+        }
       });
-    
+
+      conn.on('open', () => {
+        conn.send([pool,chunk]);
+      });
+
     });
     // print
 
@@ -45,21 +121,8 @@ function registerPool(pool, description, chunks) {
   var createChan = socket.chan("pool:" + pool, {
     pool: pool,
     description: description,
-    chunks: chunks
-  });
-
-  createChan.on("please_accept_offer", payload => {
-    trace("i was told to accept offer");
-    trace(payload);
-
-    offer = new SessionDescription(JSON.parse(payload.offer));
-    pc.setRemoteDescription(offer);
-
-    pc.createAnswer(answer => {
-      pc.setLocalDescription(answer);
-
-      createChan.push("i_accept_offer", {})
-    });
+    chunks: chunks,
+    peer: peerId
   });
 
   trace("Channel connected for pool " + pool);
@@ -81,8 +144,13 @@ fileInput.addEventListener('change', createNewPoolAndSeed, false);
 
 var seeds = [];
 
-function trace(msg) {
-  console.log(msg);
+function trace() {
+  if (arguments.length == 1) {
+    console.log(arguments[0]);  
+  } else {
+    console.log(arguments);
+  }
+  
 }
 
 function createNewPoolAndSeed() {
@@ -94,17 +162,23 @@ function createNewPoolAndSeed() {
   if (file.size === 0) {
     return;
   }
-
-  var chunkSize = 16384;
+  
   let chunkHashes = [];
+  let largeObject = {};
 
   var sliceFile = function(offset) {
     var reader = new window.FileReader();
     reader.onload = (function() {
       return function(e) {
-        trace("computing hash for: " + e.target.result);
-        trace("chunk hash: " + CryptoJS.SHA256(e.target.result));
-        chunkHashes.push(CryptoJS.SHA256(e.target.result).toString());
+        var wordArray = CryptoJS.lib.WordArray.create(e.target.result);
+
+        trace("computing hash for", wordArray);
+        let sha = CryptoJS.SHA256(wordArray).toString();
+
+        trace("sha", wordArray);
+
+        chunkHashes.push(sha);
+        largeObject[sha] = e.target.result;
 
         if (file.size > offset + e.target.result.byteLength) {
           window.setTimeout(sliceFile, 0, offset + chunkSize);
@@ -113,7 +187,10 @@ function createNewPoolAndSeed() {
 
           let pool = CryptoJS.SHA256(chunkHashes.join("")).toString();
 
+          veryLargeObject[pool] = largeObject;
           registerPool(pool, file.name, chunkHashes);
+
+          trace("large object", veryLargeObject);
           
           fileInput.disabled = false;
         }
@@ -122,7 +199,7 @@ function createNewPoolAndSeed() {
     
     var slice = file.slice(offset, offset + chunkSize);
 
-    reader.readAsBinaryString(slice);
+    reader.readAsArrayBuffer(slice);
   };
 
   sliceFile(0);

@@ -3,60 +3,70 @@ defmodule Fuego.PoolTest do
   alias Fuego.Pool
 
   setup do
-    pool = gen_sha
-    peer = "1.1.1.1"
+    pool_id = gen_sha
+    peer_id = "1-1-1-1"
     chunks = [gen_sha, gen_sha]
     description = "my pool"
     
-    true == Pool.register_pool(pool, peer, chunks, description)
+    true == Pool.register_pool(pool_id, peer_id, chunks, description)
 
-    {:ok, pool: pool, peer: peer, chunks: chunks, description: description}
+    {:ok, pool_id: pool_id, peer_id: peer_id, chunks: chunks, description: description}
   end
 
-  test "#pool_exists?", %{pool: pool} do
-    assert Pool.pool_exists?(pool) == true
+  test "#pool_exists?", %{pool_id: pool_id} do
+    assert Pool.pool_exists?(pool_id) == true
     assert Pool.pool_exists?("haha") == false
   end
 
-  test "#get_pool_for_client", %{pool: pool, chunks: chunks} do
-    assert Pool.get_pool_for_client(pool) == %{description: "my pool", chunks: [hd(chunks),hd(tl(chunks))]}
+  test "#get_pool_chunks_with_peers", %{pool_id: pool_id, chunks: chunks} do
+    res = Pool.get_pool_chunks_with_peers(pool_id)
+    assert res[:description] == "my pool"
+    Mix.shell.error inspect res
+    assert Enum.sort(Enum.map(res[:peers], fn peer -> hd(peer) end)) == Enum.sort(chunks)
+    assert Enum.map(res[:peers], fn peer -> hd(tl(peer)) end) == ["1-1-1-1", "1-1-1-1"]
   end
 
-  test "#find_pool", %{pool: pool, peer: peer, description: description, chunks: chunks} do
-    {:ok, found_pool} = Pool.get_pool_info(pool)
+  test "#get_pool", %{pool_id: pool_id, peer_id: peer_id, description: description, chunks: chunks} do
+    {:ok, pool} = Pool.get_pool(pool_id)
 
-    assert found_pool[:description] == description
+    assert pool[:description] == description
 
-    found_chunks = Agent.get(found_pool[:chunks], fn list -> list end)
+    found_chunks = pool[:chunks]
+    assert found_chunks == chunks
 
-    assert Enum.sort(Dict.keys(found_chunks)) == Enum.sort(chunks)
-    assert Dict.values(found_chunks) == [[peer], [peer]]
+    chunks_with_peers = Agent.get(pool[:pool_chunk_agent], fn list -> list end)
+
+    assert Enum.sort(Dict.keys(chunks_with_peers)) == Enum.sort(chunks)
+    assert Dict.values(chunks_with_peers) == [[peer_id], [peer_id]]
   end
 
-  test "#find_peer", %{pool: pool, peer: peer, chunks: chunks} do
-    found_peer = Pool.find_peer(pool, hd(chunks))
+  test "#find_a_peer_for_chunk", %{pool_id: pool_id, peer_id: peer_id, chunks: chunks} do
+    found_peer = Pool.find_a_peer_for_chunk(pool_id, hd(chunks))
 
-    assert found_peer == peer
+    assert found_peer == peer_id # the only peer
   end
 
-  test "#drop_peer_chunk", %{pool: pool, peer: peer, chunks: chunks} do
-    Pool.drop_peer_chunk(pool, hd(chunks), peer)
+  test "#drop_chunk_from_peer", %{pool_id: pool_id, peer_id: peer_id, chunks: chunks} do
+    assert Pool.find_a_peer_for_chunk(pool_id, hd(chunks)) == peer_id
 
-    assert Pool.find_peer(pool, hd(chunks)) == nil
+    Pool.drop_chunk_from_peer(pool_id, hd(chunks), peer_id)
+
+    assert Pool.find_a_peer_for_chunk(pool_id, hd(chunks)) == nil
   end
 
-  test "#claim_peer_chunk", %{pool: pool, peer: peer, chunks: chunks} do
-    Pool.drop_peer_chunk(pool, hd(chunks), peer)
+  test "#claim_chunk_by_peer", %{pool_id: pool_id, peer_id: peer_id, chunks: chunks} do
+    # Ensure we drop
+    Pool.drop_chunk_from_peer(pool_id, hd(chunks), peer_id)
+    assert Pool.find_a_peer_for_chunk(pool_id, hd(chunks)) == nil
 
-    Pool.claim_peer_chunk(pool, hd(chunks), "2.2.2.2")
-
-    assert Pool.find_peer(pool, hd(chunks)) == "2.2.2.2"
+    Pool.claim_chunk_by_peer(pool_id, hd(chunks), "2-2-2-2")
+    assert Pool.find_a_peer_for_chunk(pool_id, hd(chunks)) == "2-2-2-2"
   end
 
-  test "#drop_peer", %{pool: pool, peer: peer, chunks: chunks} do
-    Pool.drop_peer(peer) # should remove peer from all pools
+  test "#drop_peer", %{pool_id: pool_id, peer_id: peer_id, chunks: chunks} do
+    Pool.drop_peer(peer_id) # should remove peer from all pools
 
-    assert Pool.find_peer(pool, hd(chunks)) == nil
+    assert Pool.find_a_peer_for_chunk(pool_id, hd(chunks)) == nil
   end
 
   defp gen_sha do

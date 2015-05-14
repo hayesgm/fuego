@@ -4,5 +4,7 @@
 
     <input type="button" id="refresh" value="refresh">    
     <input type="file" id="fileInput">    
+
+    <a id="downloadEl"></a>
   </div>
 </div>

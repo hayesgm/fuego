@@ -16,7 +16,7 @@ defmodule Fuego do
     ]
 
     :ets.new(:pool_registry, [:set, :public, :named_table])
-    :ets.new(:peer_registry, [:set, :public, :named_table])
+    :ets.new(:claim_registry, [:set, :public, :named_table])
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
     # for other strategies and supported options
