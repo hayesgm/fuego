@@ -86,18 +86,18 @@ defmodule Fuego.Pool do
   def get_pool_chunks_with_peers(pool_id) do
     {:ok, pool} = get_pool(pool_id)
 
-    chunk_peers = Agent.get(pool[:pool_chunk_agent], fn chunks ->
-      Enum.map(chunks, fn chunk_pair ->
-        {chunk, peers} = chunk_pair
+    pool_chunks = Agent.get(pool[:pool_chunk_agent], fn chunks -> chunks end)
 
-        case Enum.shuffle(peers) do
-          [h|_] -> [chunk, h]
-          [] -> nil
-        end
-      end)
+    chunk_peers = Enum.map(pool_chunks, fn chunk_pair ->
+      {chunk, peers} = chunk_pair
+
+      case Enum.shuffle(peers) do
+        [h|_] -> [chunk, h]
+        [] -> nil
+      end
     end)
 
-    %{description: pool[:description], peers: chunk_peers}
+    %{description: pool[:description], chunks: pool[:chunks], peers: chunk_peers}
   end
 
   # Registers a peer is willing to seed a given chunk of a pool

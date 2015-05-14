@@ -33,7 +33,3 @@ config :fuego, Fuego.Repo,
   password: "postgres",
   database: "fuego_dev",
   size: 10 # The amount of database connections in the pool
-
-config :cqerl,
-  cassandra_nodes: ["127.0.0.1": 9042],
-  keyspace: "fuego_dev"

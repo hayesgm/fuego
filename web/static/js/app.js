@@ -1,178 +1,168 @@
 import {Socket} from "phoenix"
+import Helpers from "web/static/js/helpers"
+import {trace,debug} from "web/static/js/logging"
 
-function guid() {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1);
-  }
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-    s4() + '-' + s4() + s4() + s4();
+let PEER_JS_API_KEY = 'dx24ylo616y9zfr';
+let peer_id = Helpers.guid();
+let CHUNK_SIZE = 16384;
+
+let peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: 3});
+let veryLargeObject = {};
+let metaData = {};
+
+let seeds = [];
+let downloadEl = document.querySelector('a#downloadEl');
+let refreshEl = document.querySelector('#refresh');
+let fileInputEl = document.querySelector('input#fileInput');
+let alertEl = document.querySelector("#alert");
+
+let socket = new Socket("/pm");
+
+function init() {
+  socket.connect();
+
+  // File Receipt
+  window.addEventListener("hashchange", changeHash);
+  refreshEl.addEventListener('click', changeHash);
+
+  // File Seeding
+  fileInputEl.addEventListener('change', createNewPoolAndSeed, false);
+
+  changeHash();
 }
 
-Array.prototype.diff = function(a) {
-  return this.filter(function(i) {return a.indexOf(i) < 0;});
-};
+function showDownload(metaData, largeObject) {
+  downloadEl.href = URL.createObjectURL(new Blob(metaData.chunks.map(chunk => { return largeObject[chunk]; })));
+  downloadEl.download = metaData.name;
 
-Object.values = obj => Object.keys(obj).map(key => obj[key]);
-
-function showDownload(name, largeObject) {
-  var downloadEl = document.querySelector('a#downloadEl');
-  downloadEl.href = URL.createObjectURL(new Blob(Object.values(largeObject)));
-  downloadEl.download = name;
-
-  var text = 'Click to download ' + name;
+  let text = 'Click to download ' + metaData.name;
 
   while (downloadEl.firstChild) {
     downloadEl.removeChild(downloadEl.firstChild);
   }
 
   downloadEl.appendChild(document.createTextNode(text));
-  downloadEl.style.display = 'block';
 };
 
-var PEER_JS_API_KEY = 'dx24ylo616y9zfr';
-var peerId = guid();
-var peer = new Peer(peerId, {key: PEER_JS_API_KEY});
-var chunkSize = 16384;
+function showShare(pool_id) {
+  let text = 'Pool created, share this link: ' + window.location.toString().replace("%F0%9F%94%A5","🔥").replace(/#.*/i,"") + "#" + pool_id;
 
-var veryLargeObject = {};
-var metaData = {};
+  alertEl.appendChild(document.createTextNode(text));
+}
 
+// "Seeder" being asked for a chunk
 peer.on('connection', function(conn) {
   conn.on('data', function(data){
-    console.log(data);
-    var pool = data[0];
-    var chunk = data[1];
+    debug("peer data", data);
 
-    console.log("Sending peer chunk: " + pool + ":" + chunk);
-    console.log(veryLargeObject[pool][chunk]);
+    var [pool_id, chunk] = data;
 
-    conn.send([pool, chunk, veryLargeObject[pool][chunk]]);
+    trace("Sending peer chunk", pool_id, chunk);
+    debug(veryLargeObject[pool_id][chunk]);
+
+    conn.send([pool_id, chunk, veryLargeObject[pool_id][chunk]]);
   });
 });
 
-var changeHash = function() {
-  var pool = location.hash.slice(1);
+function changeHash() {
+  let pool_id = location.hash.slice(1);
+  location.hash = ""; // clear hash
 
-  console.log("hash changed to: " + pool);
+  if (pool_id == "") {
+    return;
+  }
 
-  var socket = new Socket("/pm")
-  socket.connect()
-  var chan = socket.chan("pool:" + pool, {client: true});
+  trace("fetching pool", pool_id);
+
+  let chan = socket.chan("pool:" + pool_id, {client: true, peer_id: peer_id});
 
   chan.join().receive("ok", response => {
-    console.log("You are joinining...");
-    console.log(response);
-    console.log(response.peers[0][0]);
-    veryLargeObject[pool] = {};
-    metaData[pool] = {
-      chunks: response.peers.map(chunkPeer => {return chunkPeer[0];}),
+    trace("joined pool", response);
+
+    // Initialize pool
+    veryLargeObject[pool_id] = {};
+
+    // and set pool meta-data
+    metaData[pool_id] = {
+      chunks: response.chunks,
       name: response.description
     };
 
-    console.log(["metadata",metaData[pool]]);
-
     response.peers.forEach(chunkPeer => {
-      var chunk = chunkPeer[0];
-      var otherPeerId = chunkPeer[1];
+      let [chunk, remotePeerId] = chunkPeer;
 
-      console.log(['chunk', chunk, otherPeerId]);
+      // Let's try to connect to the other peer
+      let conn = peer.connect(remotePeerId);
 
-      var conn = peer.connect(otherPeerId);
-      conn.on('data', (data) => {
-        var pool = data[0];
-        var chunk = data[1];
-        var data = data[2];
+      conn.on('error', (err) => {
+        trace('webrtc error', err);
+      });
 
-        veryLargeObject[pool][chunk] = data;
+      conn.on('data', (message) => {
+        let [pool_id, chunk, data] = message;
 
-        console.log("large object");
-        console.log(veryLargeObject);
+        // Store data in local object
+        veryLargeObject[pool_id][chunk] = data;
+
+        let missingChunks = Helpers.diff(metaData[pool_id].chunks, Object.keys(veryLargeObject[pool_id]));
         
-        var missingChunks = metaData[pool].chunks.diff(Object.keys(veryLargeObject[pool]));
-        
-        trace("missing chunks", missingChunks)
+        debug("missing chunks", missingChunks)
+
         if (missingChunks.length == 0) {
-          console.log("file complete, downloading...");
-
-          showDownload(metaData[pool].name, veryLargeObject[pool]);
+          trace("Pool download complete", pool_id);
+          showDownload(metaData[pool_id], veryLargeObject[pool_id]);
         }
       });
 
+      // When we connect, let's ask for a chunk immediately
       conn.on('open', () => {
-        conn.send([pool,chunk]);
+        conn.send([pool_id,chunk]);
       });
 
-    });
-    // print
+      // TODO: If we can't disconnect, inform server?
 
-    location.hash = ""; // clear hash
+    });
   });
 };
 
-function registerPool(pool, description, chunks) {
-  var socket = new Socket("/pm")
-  socket.connect()
-  
-  trace("Registering pool for pool " + pool + " ( " + description + " ) ");
-  trace(chunks)
+function registerPool(pool_id, description, chunks) {
+  trace("Registering pool for pool", pool_id, description);
+  debug("Chunks", chunks);
 
-  var createChan = socket.chan("pool:" + pool, {
-    pool: pool,
+  let chan = socket.chan("pool:" + pool_id, {
+    pool_id: pool_id,
     description: description,
     chunks: chunks,
-    peer: peerId
+    peer_id: peer_id
   });
 
-  trace("Channel connected for pool " + pool);
-
-  createChan.join().receive("ok", message => {
-    trace("got message back...");
-    trace(message);
+  chan.join().receive("ok", message => {
+    trace("registered pool", message);
+    showShare(pool_id)
   });
 };
-
-// This is for receipt
-window.addEventListener("hashchange", changeHash);
-let refresh = document.querySelector('#refresh');
-refresh.addEventListener('click', changeHash);
-
-// This is for create a pool
-let fileInput = document.querySelector('input#fileInput');
-fileInput.addEventListener('change', createNewPoolAndSeed, false);
-
-var seeds = [];
-
-function trace() {
-  if (arguments.length == 1) {
-    console.log(arguments[0]);  
-  } else {
-    console.log(arguments);
-  }
-  
-}
 
 function createNewPoolAndSeed() {
   fileInput.disabled = true;
 
   var file = fileInput.files[0];
   
-  trace('file is ' + [file.name, file.size, file.type, file.lastModifiedDate].join(' '));
-  if (file.size === 0) {
+  trace('file', [file.name, file.size, file.type, file.lastModifiedDate]);
+  if (file.size === 0 && !file.name) {
     return;
   }
-  
+
   let chunkHashes = [];
   let largeObject = {};
 
   var sliceFile = function(offset) {
     var reader = new window.FileReader();
+
     reader.onload = (function() {
       return function(e) {
         var wordArray = CryptoJS.lib.WordArray.create(e.target.result);
 
-        trace("computing hash for", wordArray);
+        debug("computing hash for", wordArray);
         let sha = CryptoJS.SHA256(wordArray).toString();
 
         trace("sha", wordArray);
@@ -181,23 +171,27 @@ function createNewPoolAndSeed() {
         largeObject[sha] = e.target.result;
 
         if (file.size > offset + e.target.result.byteLength) {
-          window.setTimeout(sliceFile, 0, offset + chunkSize);
+          // repeat
+          window.setTimeout(sliceFile, 0, offset + CHUNK_SIZE);
         } else {
           // We're done walking through the slices
-
           let pool = CryptoJS.SHA256(chunkHashes.join("")).toString();
 
+          // Store locally
           veryLargeObject[pool] = largeObject;
+
+          // Register with the big man
           registerPool(pool, file.name, chunkHashes);
 
-          trace("large object", veryLargeObject);
-          
+          // debug("large object", veryLargeObject);
+            
+          // and we're back...
           fileInput.disabled = false;
         }
       };
     })(file);
     
-    var slice = file.slice(offset, offset + chunkSize);
+    var slice = file.slice(offset, offset + CHUNK_SIZE);
 
     reader.readAsArrayBuffer(slice);
   };
@@ -205,7 +199,4 @@ function createNewPoolAndSeed() {
   sliceFile(0);
 }
 
-let App = {
-}
-
-export default App
+init();

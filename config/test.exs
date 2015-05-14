@@ -16,7 +16,3 @@ config :fuego, Fuego.Repo,
   password: "postgres",
   database: "fuego_test",
   size: 1 # Use a single connection for transactional tests
-
-config :cqerl,
-  cassandra_nodes: ["127.0.0.1": 9042],
-  keyspace: "fuego_test"
