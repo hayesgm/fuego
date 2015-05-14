@@ -7,8 +7,4 @@ defmodule Fuego.PageController do
     redirect conn, to: page_path(conn, :home)
   end
 
-  def home(conn, _params) do
-    render conn, "home2.html"
-  end
-
 end
