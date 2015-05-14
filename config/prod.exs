@@ -13,8 +13,7 @@ use Mix.Config
 # which you typically run after static files are built.
 config :fuego, Fuego.Endpoint,
   http: [port: {:system, "PORT"}],
-  url: [host: "burn.pm"],
-  cache_static_manifest: "priv/static/manifest.json"
+  url: [host: "burn.pm"]
 
 # ## SSL Support
 #
