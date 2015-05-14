@@ -30,5 +30,5 @@
     <script src='//crypto-js.googlecode.com/svn/tags/3.1.2/build/components/lib-typedarrays-min.js'></script>
     <script src="//cdn.peerjs.com/0.3/peer.js"></script>
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
-  </body>
+  </body> 
 </html>
