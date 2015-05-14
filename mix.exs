@@ -18,7 +18,7 @@ defmodule Fuego.Mixfile do
   def application do
     [mod: {Fuego, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger,
-                    :phoenix_ecto, :postgrex, :cqerl]]
+                    :phoenix_ecto, :postgrex]]
   end
 
   # Specifies which paths to compile per environment
@@ -29,13 +29,12 @@ defmodule Fuego.Mixfile do
   #
   # Type `mix help deps` for examples and options
   defp deps do
-    [{:phoenix, "~> 0.13"},
+    [{:phoenix, github: "phoenixframework/phoenix", override: true},
      {:phoenix_ecto, "~> 0.4"},
      {:postgrex, ">= 0.0.0"},
      {:phoenix_html, "~> 1.0"},
      {:phoenix_live_reload, "~> 0.4", only: :dev},
      {:cowboy, "~> 1.0"},
-     {:cqerl, github: "matehat/cqerl"},
      {:hexate, "~> 0.5.1"}]
   end
 end

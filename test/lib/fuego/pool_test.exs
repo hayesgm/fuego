@@ -3,9 +3,6 @@ defmodule Fuego.PoolTest do
   alias Fuego.Pool
 
   setup do
-    :ets.new(:pool_registry, [:set, :protected, :named_table])
-    :ets.new(:peer_registry, [:set, :protected, :named_table])
-
     pool = gen_sha
     peer = "1.1.1.1"
     chunks = [gen_sha, gen_sha]
@@ -14,6 +11,15 @@ defmodule Fuego.PoolTest do
     true == Pool.register_pool(pool, peer, chunks, description)
 
     {:ok, pool: pool, peer: peer, chunks: chunks, description: description}
+  end
+
+  test "#pool_exists?", %{pool: pool} do
+    assert Pool.pool_exists?(pool) == true
+    assert Pool.pool_exists?("haha") == false
+  end
+
+  test "#get_pool_for_client", %{pool: pool, chunks: chunks} do
+    assert Pool.get_pool_for_client(pool) == %{description: "my pool", chunks: [hd(chunks),hd(tl(chunks))]}
   end
 
   test "#find_pool", %{pool: pool, peer: peer, description: description, chunks: chunks} do

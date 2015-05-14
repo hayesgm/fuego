@@ -6,7 +6,7 @@
   "fs": {:hex, :fs, "0.9.2"},
   "hexate": {:hex, :hexate, "0.5.1"},
   "lz4": {:git, "https://github.com/szktty/erlang-lz4.git", "30878eafeff35939052c2cafe17d21c95029d3a1", []},
-  "phoenix": {:hex, :phoenix, "0.13.0"},
+  "phoenix": {:git, "git://github.com/phoenixframework/phoenix.git", "02d5e00e7ec10b8aef6028de3f7a8c8edb62d80f", []},
   "phoenix_ecto": {:hex, :phoenix_ecto, "0.4.0"},
   "phoenix_html": {:hex, :phoenix_html, "1.0.1"},
   "phoenix_live_reload": {:hex, :phoenix_live_reload, "0.4.0"},

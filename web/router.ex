@@ -16,11 +16,11 @@ defmodule Fuego.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
+    get "/🔥", PageController, :home
+  end
 
-    post "/🔥", NoteController, :create
-    get "/🔥", NoteController, :new
-    get "/🔥/:tkn", NoteController, :show
-    get "/🔥/:tkn/🔥", NoteController, :show
+  socket "/pm", Fuego do
+    channel "pool:*", PoolChannel
   end
 
   # Other scopes may use custom stacks.

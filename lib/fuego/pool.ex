@@ -4,11 +4,11 @@ defmodule Fuego.Pool do
   # pool should be a sha-256 sum of the value of the chunks
   # first seeder is responsible for finding peers for a given pool
   def register_pool(pool, peer, chunks, description) do
-    {:yes} = is_sha256?(pool) # verify pool is sha256
+    true = is_sha256?(pool) # verify pool is sha256
 
     peered_chunks = Enum.reduce chunks, HashDict.new, fn chunk, dict ->
       # verify each chunk is sha-256
-      {:yes} = is_sha256?(chunk)
+      true = is_sha256?(chunk)
 
       Dict.put(dict, chunk, [peer])
     end
@@ -31,10 +31,17 @@ defmodule Fuego.Pool do
     # Grab a random peer from a chunk
     Agent.get(pool_agent, fn dict -> 
       case Enum.shuffle(dict[chunk]) do
-        [h|t] -> h
+        [h|_] -> h
         [] -> nil
       end
     end)
+  end
+
+  def pool_exists?(pool) do
+    case :ets.lookup(:pool_registry, pool) do
+      [{^pool, _}] -> true
+      [] -> false
+    end
   end
 
   # Gets description and list of all chunks in a given pool
@@ -73,6 +80,14 @@ defmodule Fuego.Pool do
 
         {:ok, peer_agent}
     end
+  end
+
+  def get_pool_for_client(pool) do
+    {:ok, pool_info} = get_pool_info(pool)
+
+    chunks = Agent.get(pool_info[:chunks], fn chunks -> chunks end)
+
+    %{description: pool_info[:description], chunks: Dict.keys(chunks)}
   end
 
   # Registers a peer is willing to seed a given chunk of a pool
@@ -125,9 +140,9 @@ defmodule Fuego.Pool do
 
   defp is_sha256?(hash) do
     if hash =~ ~r"[A-Fa-f0-9]{64}" do
-      {:yes}
+      true
     else
-      {:no}
+      false
     end
   end
 
