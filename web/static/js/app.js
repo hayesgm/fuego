@@ -123,7 +123,7 @@ function changeHash() {
 
     });
   });
-};
+}; 
 
 function registerPool(pool_id, description, chunks) {
   trace("Registering pool for pool", pool_id, description);
