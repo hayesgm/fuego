@@ -1,14 +1,13 @@
 import {Socket} from "phoenix"
 import Helpers from "web/static/js/helpers"
 import {trace,debug} from "web/static/js/logging"
+import db from "web/static/js/database"
 
 let PEER_JS_API_KEY = 'dx24ylo616y9zfr';
 let peer_id = Helpers.guid();
-let CHUNK_SIZE = 16384;
+let CHUNK_SIZE = Math.pow(2, 18); // 256KB chunks
 
 let peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: 3});
-let veryLargeObject = {};
-let metaData = {};
 
 let seeds = [];
 let downloadEl = document.querySelector('a#downloadEl');
@@ -17,6 +16,15 @@ let fileInputEl = document.querySelector('input#fileInput');
 let alertEl = document.querySelector("#alert");
 
 let socket = new Socket("/pm");
+
+window.info = function() {
+  return {
+    server: db.server(),
+    pools: db.server().pools.query().all().execute().then(x => {console.log(x)}),
+    chunks: db.server().chunks.query().all().execute().then(x => {console.log(x)}),
+    blobs: db.server().blobs.query().all().execute().then(x => {console.log(x)})
+  };
+};
 
 function init() {
   socket.connect();
@@ -29,19 +37,37 @@ function init() {
   fileInputEl.addEventListener('change', createNewPoolAndSeed, false);
 
   changeHash();
+
+  debug("ready...");
 }
 
-function showDownload(metaData, largeObject) {
-  downloadEl.href = URL.createObjectURL(new Blob(metaData.chunks.map(chunk => { return largeObject[chunk]; })));
-  downloadEl.download = metaData.name;
+function showDownload(pool_id) {
+  Promise.all([db.getPoolInfo(pool_id), db.getAllChunkData(pool_id)]).then(values => {
+    var [poolInfo, chunkData] = values;
+    debug(poolInfo, chunkData);
 
-  let text = 'Click to download ' + metaData.name;
+    // Need to arrange this back into the correct order
+    var arrayBuffers = poolInfo[0].chunks.map(chunk => {
+      let match = chunkData.filter(chunkDatum => {
+        return chunkDatum[0].chunk == chunk;
+      })[0];
 
-  while (downloadEl.firstChild) {
-    downloadEl.removeChild(downloadEl.firstChild);
-  }
+      return match[0].data;
+    });
 
-  downloadEl.appendChild(document.createTextNode(text));
+    console.log('array buffers', arrayBuffers);
+
+    downloadEl.href = URL.createObjectURL(new Blob(arrayBuffers));
+    downloadEl.download = poolInfo[0].description;
+
+    let text = 'Click to download ' + poolInfo[0].description;
+
+    while (downloadEl.firstChild) {
+      downloadEl.removeChild(downloadEl.firstChild);
+    }
+
+    downloadEl.appendChild(document.createTextNode(text));
+  })
 };
 
 function showShare(pool_id) {
@@ -58,9 +84,9 @@ peer.on('connection', function(conn) {
     var [pool_id, chunk] = data;
 
     trace("Sending peer chunk", pool_id, chunk);
-    debug(veryLargeObject[pool_id][chunk]);
-
-    conn.send([pool_id, chunk, veryLargeObject[pool_id][chunk]]);
+    db.getChunkData(chunk).then(blob => {
+      conn.send([pool_id, chunk, blob[0].data]);
+    });
   });
 });
 
@@ -79,51 +105,61 @@ function changeHash() {
   chan.join().receive("ok", response => {
     trace("joined pool", response);
 
-    // Initialize pool
-    veryLargeObject[pool_id] = {};
+    var findPeers = function() {
+      response.peers.forEach(chunkPeer => {
+        let [chunk, remotePeerId] = chunkPeer;
 
-    // and set pool meta-data
-    metaData[pool_id] = {
-      chunks: response.chunks,
-      name: response.description
+        // Let's try to connect to the other peer
+        let conn = peer.connect(remotePeerId);
+
+        conn.on('error', (err) => {
+          trace('webrtc error', err);
+        });
+
+        conn.on('data', (message) => {
+          debug(message);
+          let [pool_id, chunk, data] = message;
+          debug("rec'd", pool_id, chunk, data);
+
+          // Store data in local object
+          db.storeBlob(chunk, data).then(blob => {
+            debug("stored blob", blob, blob[0].blob_id);
+            db.storeChunk(pool_id, chunk, blob[0].blob_id).then(chunkObj => {
+              debug("stored chunk", chunkObj);
+              Promise.all([db.getPoolInfo(pool_id), db.getChunks(pool_id)]).then(values => {
+                debug("as promised...");
+                let [poolInfo, chunkObjs] = values;
+                let totalChunks = poolInfo[0].chunks;
+                let fetchedChunks = chunkObjs.map(obj => {return obj.chunk;});
+
+                debug(poolInfo, chunkObjs, totalChunks, fetchedChunks);
+
+                let missingChunks = Helpers.diff(totalChunks, fetchedChunks);
+              
+                debug("missing chunks", missingChunks)
+
+                if (missingChunks.length == 0) {
+                  trace("Pool download complete", pool_id);
+                  showDownload(pool_id);
+                }
+              });
+            });
+          });
+        });
+
+        // When we connect, let's ask for a chunk immediately
+        conn.on('open', () => {
+          conn.send([pool_id,chunk]);
+        });
+
+        // TODO: If we can't disconnect, inform server?
+
+      });
     };
 
-    response.peers.forEach(chunkPeer => {
-      let [chunk, remotePeerId] = chunkPeer;
-
-      // Let's try to connect to the other peer
-      let conn = peer.connect(remotePeerId);
-
-      conn.on('error', (err) => {
-        trace('webrtc error', err);
-      });
-
-      conn.on('data', (message) => {
-        let [pool_id, chunk, data] = message;
-
-        // Store data in local object
-        veryLargeObject[pool_id][chunk] = data;
-
-        let missingChunks = Helpers.diff(metaData[pool_id].chunks, Object.keys(veryLargeObject[pool_id]));
-        
-        debug("missing chunks", missingChunks)
-
-        if (missingChunks.length == 0) {
-          trace("Pool download complete", pool_id);
-          showDownload(metaData[pool_id], veryLargeObject[pool_id]);
-        }
-      });
-
-      // When we connect, let's ask for a chunk immediately
-      conn.on('open', () => {
-        conn.send([pool_id,chunk]);
-      });
-
-      // TODO: If we can't disconnect, inform server?
-
-    });
+    db.createPool(pool_id, response.chunks, response.description).then(findPeers).catch(findPeers);
   });
-}; 
+};
 
 function registerPool(pool_id, description, chunks) {
   trace("Registering pool for pool", pool_id, description);
@@ -153,7 +189,7 @@ function createNewPoolAndSeed() {
   }
 
   let chunkHashes = [];
-  let largeObject = {};
+  let chunkMap = {};
 
   var sliceFile = function(offset) {
     var reader = new window.FileReader();
@@ -168,26 +204,36 @@ function createNewPoolAndSeed() {
         trace("sha", wordArray);
 
         chunkHashes.push(sha);
-        largeObject[sha] = e.target.result;
+        db.storeBlob(sha, e.target.result).then(blob => {
+          debug("blob", blob);
+          chunkMap[sha] = blob[0].blob_id;
 
-        if (file.size > offset + e.target.result.byteLength) {
-          // repeat
-          window.setTimeout(sliceFile, 0, offset + CHUNK_SIZE);
-        } else {
-          // We're done walking through the slices
-          let pool = CryptoJS.SHA256(chunkHashes.join("")).toString();
+          if (file.size > offset + e.target.result.byteLength) {
+            // repeat
+            window.setTimeout(sliceFile, 0, offset + CHUNK_SIZE);
+          } else {
+            // We're done walking through the slices
+            let pool_id = CryptoJS.SHA256(chunkHashes.join("")).toString();
 
-          // Store locally
-          veryLargeObject[pool] = largeObject;
+            var addChunksAndComplete = () => {
+              trace("chunk hashes", chunkHashes);
+              let promises = chunkHashes.map(chunk => {
+                trace("storing chunk", pool_id, chunk, chunkMap[chunk]);
+                db.storeChunk(pool_id, chunk, chunkMap[chunk]);
+              });
 
-          // Register with the big man
-          registerPool(pool, file.name, chunkHashes);
+              Promise.all(promises).then(() => {
+                // Register with the big man
+                registerPool(pool_id, file.name, chunkHashes);
 
-          // debug("large object", veryLargeObject);
-            
-          // and we're back...
-          fileInput.disabled = false;
-        }
+                // and we're back...
+                fileInput.disabled = false;
+              });
+            };
+
+            db.createPool(pool_id, chunkHashes, file.name).then(addChunksAndComplete).catch(addChunksAndComplete);
+          }
+        });
       };
     })(file);
     
