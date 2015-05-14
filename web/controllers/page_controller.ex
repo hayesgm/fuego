@@ -8,7 +8,7 @@ defmodule Fuego.PageController do
   end
 
   def home(conn, _params) do
-    render conn, "home.html"
+    render conn, "home2.html"
   end
 
 end
