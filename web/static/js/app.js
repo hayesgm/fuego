@@ -13,6 +13,10 @@ var changeHash = function() {
   socket.connect()
   var chan = socket.chan("pool:" + pool, {client: true});
 
+  chan.on("offer_accepted", payload => {
+    payload.offer
+  });
+
   chan.join().receive("ok", response => {
     console.log("You are joinining...");
     console.log(response);
