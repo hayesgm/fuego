@@ -1,3 +1,4 @@
+"use strict";
 
 function trace() {
   if (arguments.length == 1) {

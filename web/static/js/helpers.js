@@ -1,3 +1,4 @@
+"use strict";
 
 var guid = function() {
   function s4() {
