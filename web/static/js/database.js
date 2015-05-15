@@ -71,7 +71,6 @@ function storeBlob(chunk, data) {
     if (blobs.length > 0) {
       return blobs;
     } else {
-      console.log(['storing data',data]);
       return server.blobs.add({
         chunk: chunk,
         data: data

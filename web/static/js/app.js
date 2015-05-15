@@ -17,6 +17,13 @@ let alertEl = document.querySelector("#alert");
 
 let socket = new Socket("/pm");
 
+let peers = {};
+
+let chunkQueue = [];
+let activeDownloads = [];
+let SIMULTANEOUS_DOWNLOADS = 5;
+let downloadLinks = {};
+
 window.info = function() {
   return {
     server: db.server(),
@@ -42,32 +49,34 @@ function init() {
 }
 
 function showDownload(pool_id) {
-  Promise.all([db.getPoolInfo(pool_id), db.getAllChunkData(pool_id)]).then(values => {
-    var [poolInfo, chunkData] = values;
-    debug(poolInfo, chunkData);
+  if (!downloadLinks[pool_id]) {
+    downloadLinks[pool_id] = true; // let's make sure we only recompile this once
 
-    // Need to arrange this back into the correct order
-    var arrayBuffers = poolInfo[0].chunks.map(chunk => {
-      let match = chunkData.filter(chunkDatum => {
-        return chunkDatum[0].chunk == chunk;
-      })[0];
+    Promise.all([db.getPoolInfo(pool_id), db.getAllChunkData(pool_id)]).then(values => {
+      var [poolInfo, chunkData] = values;
+      debug(poolInfo, chunkData);
 
-      return match[0].data;
+      // Need to arrange this back into the correct order
+      var arrayBuffers = poolInfo[0].chunks.map(chunk => {
+        let match = chunkData.filter(chunkDatum => {
+          return chunkDatum[0].chunk == chunk;
+        })[0];
+
+        return match[0].data;
+      });
+
+      downloadEl.href = URL.createObjectURL(new Blob(arrayBuffers));
+      downloadEl.download = poolInfo[0].description;
+
+      let text = 'Click to download ' + poolInfo[0].description;
+
+      while (downloadEl.firstChild) {
+        downloadEl.removeChild(downloadEl.firstChild);
+      }
+
+      downloadEl.appendChild(document.createTextNode(text));
     });
-
-    console.log('array buffers', arrayBuffers);
-
-    downloadEl.href = URL.createObjectURL(new Blob(arrayBuffers));
-    downloadEl.download = poolInfo[0].description;
-
-    let text = 'Click to download ' + poolInfo[0].description;
-
-    while (downloadEl.firstChild) {
-      downloadEl.removeChild(downloadEl.firstChild);
-    }
-
-    downloadEl.appendChild(document.createTextNode(text));
-  })
+  }
 };
 
 function showShare(pool_id) {
@@ -90,6 +99,92 @@ peer.on('connection', function(conn) {
   });
 });
 
+function downloadChunk(pool_id, chunk, remotePeerId) {
+  debug("downloading chunk", chunk);
+  activeDownloads.push([chunk, remotePeerId]);
+
+  // We will re-use an existing connection, if given
+  if (peers[remotePeerId]) {
+    debug("using existing connection", remotePeerId);
+
+    // Just ask for the given chunk if we're already connected
+    peers[remotePeerId].on('open', () => {
+      peers[remotePeerId].send([pool_id,chunk]);
+    });
+  } else {
+    // Set into conn
+    debug("connecting to peer", remotePeerId);
+    peers[remotePeerId] = peer.connect(remotePeerId);
+
+    let conn = peers[remotePeerId]
+
+    conn.on('error', (err) => {
+      trace('webrtc error', err);
+    });
+
+    conn.on('data', (message) => {
+      debug(message);
+      let [pool_id, chunk, data] = message;
+      debug("rec'd", pool_id, chunk, data);
+
+      // Store data in local object
+      db.storeBlob(chunk, data).then(blob => {
+        debug("stored blob", blob, blob[0].blob_id);
+        db.storeChunk(pool_id, chunk, blob[0].blob_id).then(chunkObj => {
+          debug("stored chunk", chunkObj);
+          Promise.all([db.getPoolInfo(pool_id), db.getChunks(pool_id)]).then(values => {
+            debug("as promised...", values);
+            let [poolInfo, chunkObjs] = values;
+            let totalChunks = poolInfo[0].chunks;
+            let fetchedChunks = chunkObjs.map(obj => {return obj.chunk;});
+
+            debug(poolInfo, chunkObjs, totalChunks, fetchedChunks);
+
+            let missingChunks = Helpers.diff(totalChunks, fetchedChunks);
+          
+            debug("missing chunks", missingChunks)
+
+            freeChunk(pool_id, chunk);
+
+            if (missingChunks.length == 0) {
+              trace("Pool download complete", pool_id);
+              showDownload(pool_id);
+            }
+          });
+        });
+      });
+    });
+
+    // When we connect, let's ask for a chunk immediately
+    conn.on('open', () => {
+      conn.send([pool_id,chunk]);
+    });
+
+    // TODO: If we can't disconnect, inform server?
+  }
+}
+
+function freeChunk(pool_id, chunk) {
+  activeDownloads = activeDownloads.filter(a => { return a[0] == pool_id && a[1] == chunk; });
+  debug("freeing chunk", activeDownloads);
+
+  let nextChunkPeer = chunkQueue.shift();
+  if (nextChunkPeer) {
+    let [pool_id, nextChunk, remotePeerId] = nextChunkPeer;
+
+    downloadChunk(pool_id, nextChunk, remotePeerId);
+  }
+}
+
+function getChunk(pool_id, chunk, remotePeerId) {
+  if (activeDownloads.length < SIMULTANEOUS_DOWNLOADS) {
+    downloadChunk(pool_id, chunk, remotePeerId);
+  } else {
+    debug("queueing chunk", chunk);
+    chunkQueue.push([pool_id, chunk, remotePeerId]);
+  }
+}
+
 function changeHash() {
   let pool_id = location.hash.slice(1);
   location.hash = ""; // clear hash
@@ -108,52 +203,7 @@ function changeHash() {
     var findPeers = function() {
       response.peers.forEach(chunkPeer => {
         let [chunk, remotePeerId] = chunkPeer;
-
-        // Let's try to connect to the other peer
-        let conn = peer.connect(remotePeerId);
-
-        conn.on('error', (err) => {
-          trace('webrtc error', err);
-        });
-
-        conn.on('data', (message) => {
-          debug(message);
-          let [pool_id, chunk, data] = message;
-          debug("rec'd", pool_id, chunk, data);
-
-          // Store data in local object
-          db.storeBlob(chunk, data).then(blob => {
-            debug("stored blob", blob, blob[0].blob_id);
-            db.storeChunk(pool_id, chunk, blob[0].blob_id).then(chunkObj => {
-              debug("stored chunk", chunkObj);
-              Promise.all([db.getPoolInfo(pool_id), db.getChunks(pool_id)]).then(values => {
-                debug("as promised...");
-                let [poolInfo, chunkObjs] = values;
-                let totalChunks = poolInfo[0].chunks;
-                let fetchedChunks = chunkObjs.map(obj => {return obj.chunk;});
-
-                debug(poolInfo, chunkObjs, totalChunks, fetchedChunks);
-
-                let missingChunks = Helpers.diff(totalChunks, fetchedChunks);
-              
-                debug("missing chunks", missingChunks)
-
-                if (missingChunks.length == 0) {
-                  trace("Pool download complete", pool_id);
-                  showDownload(pool_id);
-                }
-              });
-            });
-          });
-        });
-
-        // When we connect, let's ask for a chunk immediately
-        conn.on('open', () => {
-          conn.send([pool_id,chunk]);
-        });
-
-        // TODO: If we can't disconnect, inform server?
-
+        getChunk(pool_id, chunk, remotePeerId);
       });
     };
 
@@ -198,14 +248,14 @@ function createNewPoolAndSeed() {
       return function(e) {
         var wordArray = CryptoJS.lib.WordArray.create(e.target.result);
 
-        debug("computing hash for", wordArray);
+        // debug("computing hash for", wordArray);
         let sha = CryptoJS.SHA256(wordArray).toString();
 
-        trace("sha", wordArray);
+        // trace("sha", wordArray);
 
         chunkHashes.push(sha);
         db.storeBlob(sha, e.target.result).then(blob => {
-          debug("blob", blob);
+          // debug("blob", blob);
           chunkMap[sha] = blob[0].blob_id;
 
           if (file.size > offset + e.target.result.byteLength) {
