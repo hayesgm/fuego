@@ -17,7 +17,7 @@ function refresh(socket, peer_id) {
         debug("got pool", pool.description, percent, "% complete")
 
         // If we haven't finished, try to complete download
-        if (percent < 100) {
+        if (percent < 99.999) {
           return fetch(socket, peer_id, pool.pool_id).then(([pool,_buffers]) => {
             return pool;
           });
