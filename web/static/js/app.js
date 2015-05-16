@@ -40,7 +40,7 @@ function init() {
   // Start if given hash to begin with
   changeHash();
 
-  Peer.resumeSeeds(socket, Peer.peer_id);
+  // Peer.resumeSeeds(socket, Peer.peer_id);
 
   Pool.refresh(socket, Peer.peer_id).then((pools) => {
     pools.forEach((pool) => {
@@ -65,7 +65,7 @@ function preDownload(pool) {
       poolEl.removeChild(poolEl.firstChild);
     }
 
-    poolEl.appendChild(document.createTextNode("Download " + pool.description + " (" + percent + "%)"));
+    poolEl.appendChild(document.createTextNode("Download " + pool.description + " (" + pool.total_size + " bytes) [" + percent + "%]"));
 
     poolsEl.appendChild(poolEl);
     poolsEl.appendChild(document.createElement("br"));
@@ -73,19 +73,35 @@ function preDownload(pool) {
 };
 
 function showDownloadLink(pool) {
-  Pool.getPoolBuffers(pool).then((arrayBuffers) => {
-    debug("pool bufferS", arrayBuffers);
+  let offset = (() => {
+    var startTime = new Date().valueOf();
+    return () => {
+      return "(+" + ( new Date().valueOf() - startTime ) + "ms)";
+    };
+  })();
 
-    downloadEl.href = URL.createObjectURL(new Blob(arrayBuffers));
+  debug("gathering pool buffers", offset());
+  Pool.getPoolBuffers(pool).then((arrayBuffers) => {
+    debug("got pool buffers", offset());
+
+    let blob = new Blob(arrayBuffers)
+
+    debug("created blob", offset());
+
+    downloadEl.href = URL.createObjectURL(blob);
+
+    debug("create object url", offset());
     downloadEl.download = pool.description;
 
-    let text = 'Click to download ' + pool.description;
+    let text = 'Click to download ' + pool.description + "("+pool.total_size+" bytes)";
 
     while (downloadEl.firstChild) {
       downloadEl.removeChild(downloadEl.firstChild);
     }
 
     downloadEl.appendChild(document.createTextNode(text));
+
+    debug("appended link", offset());
   });
 }
 
@@ -101,7 +117,9 @@ function changeHash() {
   location.hash = ""; // clear hash
 
   if (pool_id != "") {
-    Pool.fetch(socket, Peer.peer_id, pool_id).then(preDownload);
+    Pool.fetch(socket, Peer.peer_id, pool_id).then(([pool,buffers]) => {
+      preDownload(pool);
+    });
   }
 }
 

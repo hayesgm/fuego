@@ -6,8 +6,8 @@ defmodule Fuego.PageControllerTest do
     html_response(conn, 302)
   end
 
-  test "GET /" do
+  test "GET /fire" do
     conn = get conn(), "/🔥"
-    assert html_response(conn, 200) =~ "justHGH2"
+    assert html_response(conn, 200) =~ "justHGH"
   end
 end

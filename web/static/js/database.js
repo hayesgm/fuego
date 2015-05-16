@@ -4,7 +4,7 @@ let serverPromise = db.open({
   server: 'burn-pm-7',
   version: 6,
   schema: {
-    pools: { // {pool_id, description, chunks }
+    pools: { // {pool_id, chunks, description, chunk_size, total_size}
       key: { keyPath: 'pool_id' },
       indexes: {
         pool_id: { unique: true }
@@ -37,24 +37,26 @@ function getPools() {
   });
 };
 
-function findOrCreatePool(pool_id, chunks, description) {
+function findOrCreatePool(pool_id, chunks, description, chunk_size, total_size) {
   return serverPromise.then((server) => {
     return getPool(pool_id).then( (pool) => {
       if (pool) {
         return pool;
       } else {
-        return createPool(pool_id, chunks, description);
+        return createPool(pool_id, chunks, description, chunk_size, total_size);
       }
     });
   });
 };
 
-function createPool(pool_id, chunks, description) {
+function createPool(pool_id, chunks, description, chunk_size, total_size) {
   return serverPromise.then((server) => {
     return server.pools.add({
       pool_id: pool_id,
       chunks: chunks,
-      description: description
+      description: description,
+      chunk_size: chunk_size,
+      total_size: total_size
     }).then((pool) => {
       return pool[0];
     });
@@ -63,36 +65,44 @@ function createPool(pool_id, chunks, description) {
 
 function getBlob(chunk) {
   return serverPromise.then((server) => {
-    return server.blobs.query().filter('chunk', chunk).execute();
+    return server.blobs.query('chunk').only(chunk).execute();
   });
 }
 
 function getChunk(chunk) {
   return serverPromise.then((server) => {
-    return server.chunks.query().filter('chunk', chunk).execute().then((chunk) => {
-      return chunk[0];
+    return server.chunks.get(chunk).then((chunk) => {
+      return chunk;
     })
   });
 }
 
 function getChunks(pool_id) {
   return serverPromise.then((server) => {
-    return server.chunks.query().filter('pool_id', pool_id).execute();
+    return server.chunks.query('pool_id').only(pool_id).execute();
+  });
+}
+
+function getAllChunks() {
+  return serverPromise.then((server) => {
+    return server.chunks.query().all().execute();
   });
 }
 
 function getPool(pool_id) {
   return serverPromise.then((server) => {
-    return server.pools.query().filter('pool_id', pool_id).execute().then((pool) => {
-      return pool[0];
+    return server.pools.get(pool_id).then((pool) => {
+      return pool;
     });
   });
 }
 
 function getAllChunkData(pool_id) {
   return serverPromise.then((server) => {
-    return server.chunks.query().filter('pool_id', pool_id).execute().then(chunks => {
+    return getChunks(pool_id).then(chunks => {
+      console.log(["chunks",chunks]);
       var promises = chunks.map(chunk => {return getChunkData(chunk.chunk);});
+      console.log(["promises",promises]);
       return Promise.all(promises);
     });
   });
@@ -100,7 +110,7 @@ function getAllChunkData(pool_id) {
 
 function getChunkData(chunk) {
   return serverPromise.then((server) => {
-    return server.blobs.query().filter('chunk', chunk).execute().then((blob) => {
+    return server.blobs.query('chunk').only(chunk).execute().then((blob) => {
       return blob[0];
     });
   });
@@ -108,7 +118,7 @@ function getChunkData(chunk) {
 
 function storeBlob(chunk, data) {
   return serverPromise.then((server) => {
-    return server.blobs.query().filter('chunk',chunk).execute().then(blobs => {
+    return server.blobs.query('chunk').only(chunk).execute().then(blobs => {
       if (blobs.length > 0) {
         return blobs;
       } else {
@@ -123,7 +133,7 @@ function storeBlob(chunk, data) {
 
 function storeChunk(pool_id, chunk, blob_id) {
   return serverPromise.then((server) => {
-    return server.chunks.query().filter('chunk',chunk).filter('pool_id', pool_id).execute().then(chunks => {
+    return server.chunks.query('chunk').only(chunk).filter('pool_id', pool_id).execute().then(chunks => {
       if (chunks.length > 0) {
         return chunks;
       } else {
@@ -143,6 +153,7 @@ let Database = {
   findOrCreatePool: findOrCreatePool,
   createPool: createPool,
   getChunks: getChunks,
+  getAllChunks: getAllChunks,
   getBlob: getBlob,
   getChunk: getChunk,
   getPool: getPool,

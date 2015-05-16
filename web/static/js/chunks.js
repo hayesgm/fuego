@@ -3,6 +3,7 @@
 import {trace,debug} from "./logging"
 import db from "./database"
 import Peer from "./peer"
+import {getOpenChannel} from "./chan"
 
 let CHUNK_SIZE = Math.pow(2, 18); // 256KB chunks
 let SIMULTANEOUS_DOWNLOADS = 5;
@@ -13,6 +14,8 @@ let chunkQueue = [];
 // Chunks we're downloading
 let activeDownloads = [];
 let downloadPromises = {};
+
+let badPeers = [];
 
 function fetch(pool_id, chunk, remotePeerId) {
   trace("fetching chunk", pool_id, chunk, "from", remotePeerId);
@@ -66,11 +69,36 @@ function download(pool_id, chunk, remotePeerId) {
   // This is now being downloaded
   activeDownloads.push([chunk, remotePeerId]);
 
-  // We will re-use an existing connection, if given
-  if (Peer.getRemote(remotePeerId)) {
-    debug("using existing connection", remotePeerId);
+  let reconnect = (err) => {
+    trace("error downloading", chunk, "from peer", remotePeerId, "going to try new remote peer", err);
 
-    let remotePeer = Peer.getRemote(remotePeerId);
+    if (badPeers.indexOf(remotePeerId) === -1) {
+      badPeers.push(remotePeerId);
+      debug("bad peers", badPeers);
+    }
+
+    trace("finding new peer for", pool_id, chunk);
+    
+    getOpenChannel(pool_id)
+      .push("find_a_peer_for_chunk", {pool_id: pool_id, chunk: chunk, but_please_not: badPeers})
+      .receive("ok", (msg) => {
+        if (msg.peer_id) {
+          trace("trying again with peer", msg.peer_id);
+          download(pool_id, chunk, msg.peer_id);
+        } else {
+          trace("failed to find peer for chunk", pool_id, chunk);
+          releaseDownload(pool_id, chunk);
+          downloadPromises[pool_id][chunk].reject(chunk);
+        }
+      })
+      .receive("error", (reasons) => console.log("create failed", reasons) );
+  };
+
+  // We will re-use an existing connection, if given
+  let remotePeer = Peer.getRemote(remotePeerId, reconnect);
+
+  if (remotePeer) {
+    debug("using existing connection", remotePeerId);
 
     // Just ask for the given chunk if we're already connected
     if (remotePeer.open) {
@@ -83,10 +111,22 @@ function download(pool_id, chunk, remotePeerId) {
     }
   } else {
     debug("connecting to peer", remotePeerId);
-    let conn = Peer.connectRemote(remotePeerId);
+    let conn = Peer.connectRemote(remotePeerId, reconnect);
+
+    conn.on('close', () => {
+      trace('webrtc closed');
+    });
+
+    conn.on('disconnected', () => {
+      trace('webrtc disconnected');
+    });
 
     conn.on('error', (err) => {
       // TODO
+      // We're going to need to find other peers when we have a WebRTC error
+      // There's going to obviously be a ton of heuristics around "good peers"
+      // "blacklisted peers", etc. The server may want information on good/bad
+      // peers so it can take out dead nodes from the system. (when error rate > THRESHOLD)
       trace('webrtc error', err);
       releaseDownload(pool_id, chunk);
       downloadPromises[pool_id][chunk].reject();
@@ -95,7 +135,9 @@ function download(pool_id, chunk, remotePeerId) {
     conn.on('data', (message) => {
       let [pool_id, chunk, data] = message;
 
-      debug("rec'd", pool_id, chunk);
+      debug("rec'd", pool_id, chunk, "from", remotePeerId);
+
+      // TODO Verify SHA-256 sum of chunk
 
       // Store data in local object
       db.storeBlob(chunk, data).then(blob => {

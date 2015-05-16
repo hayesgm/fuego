@@ -18,7 +18,7 @@ function refresh(socket, peer_id) {
 
         // If we haven't finished, try to complete download
         if (percent < 100) {
-          return fetch(socket, peer_id, pool.pool_id).then((buffer) => {
+          return fetch(socket, peer_id, pool.pool_id).then(([pool,_buffers]) => {
             return pool;
           });
         } else {
@@ -35,10 +35,10 @@ function refresh(socket, peer_id) {
 function fetch(socket, peer_id, pool_id) {
   trace("fetching pool", pool_id);
   return Chan.find(socket, peer_id, pool_id).then( ([chan, response]) => {
-    return db.findOrCreatePool(pool_id, response.chunks, response.description).then( (pool) => {
+    return db.findOrCreatePool(pool_id, response.chunks, response.description, response.chunk_size, response.total_size).then( (pool) => {
       // The server should have given us peers automatically, but these may be stale
       var promises = response.peers.map(chunkPeer => {
-        let [chunk, remotePeerId] = chunkPeer;
+        let [chunk,remotePeerId] = chunkPeer;
 
         return Chunks.fetch(pool_id, chunk, remotePeerId).then((chunk) => {
           Peer.seed(chan, pool_id, chunk);
@@ -47,7 +47,9 @@ function fetch(socket, peer_id, pool_id) {
       });
 
       return Promise.all(promises).then(() => {
-        return getPoolBuffers(pool);
+        return getPoolBuffers(pool).then((buffers) => {
+          return [pool,buffers];
+        });
       });
     });
   });
@@ -55,11 +57,11 @@ function fetch(socket, peer_id, pool_id) {
 
 // register pool is when we have a complete pool, either from localdb or a file
 function register(socket, peer_id, pool) {
-  trace("registering pool for pool", pool.pool_id, pool.description);
+  trace("registering pool for pool", pool.pool_id, pool.description, pool.chunk_size, pool.total_size);
   debug("chunks", pool.chunks);
 
   return new Promise((resolve, reject) => {
-    Chan.create(socket, peer_id, pool.pool_id, pool.description, pool.chunks).then( (chan, _response) => {
+    Chan.create(socket, peer_id, pool.pool_id, pool.chunks, pool.description, pool.chunk_size, pool.total_size).then( (chan, _response) => {
 
       // Let's seed each of the chunks
       pool.chunks.forEach((chunk) => {
@@ -101,7 +103,7 @@ function createFromFile(file) {
               let pool_id = CryptoJS.SHA256(chunkHashes.join("")).toString();
 
               // TODO: catch
-              db.findOrCreatePool(pool_id, chunkHashes, file.name).then((pool) => {
+              db.findOrCreatePool(pool_id, chunkHashes, file.name, Chunks.CHUNK_SIZE, file.size).then((pool) => {
                 trace("chunk hashes", chunkHashes);
 
                 // Let's store the chunks locally

@@ -20,25 +20,31 @@ defmodule Fuego.PoolChannel do
     end
   end
 
-  def join("pool:" <> _, %{"pool_id" => pool_id, "description" => description, "chunks" => chunks, "peer_id" => peer_id}, socket) do
+  def join("pool:" <> _, %{"pool_id" => pool_id, "description" => description, "chunk_size" => chunk_size, "total_size" => total_size, "chunks" => chunks, "peer_id" => peer_id}, socket) do
     if Pool.pool_exists?(pool_id) do
-      Mix.shell.info "#{peer_id}: Found pool #{pool_id}..."
+      Mix.shell.info "#{peer_id}: Found pool #{pool_id}, claiming chunks..."
+
+      Enum.each(chunks, fn chunk -> # note: failures here aren't caught by anyone...
+        Pool.claim_chunk_by_peer(pool_id, chunk, peer_id)
+      end)
+
+      Mix.shell.info "#{peer_id}: chunks claimed..."
 
       {:ok, :found, %{socket| assigns: [peer_id: peer_id]}}
     else
       Mix.shell.info "#{peer_id}: Creating new pool #{pool_id} for '#{description}'"
 
-      Pool.register_pool(pool_id, peer_id, chunks, description)
+      Pool.register_pool(pool_id, peer_id, chunks, description, chunk_size, total_size)
 
       {:ok, :created, %{socket| assigns: [peer_id: peer_id]}}
     end
   end
 
-  def handle_in("find_a_peer_for_chunk", %{"pool_id" => pool_id, "chunk" => chunk}, socket) do
+  def handle_in("find_a_peer_for_chunk", %{"pool_id" => pool_id, "chunk" => chunk, "but_please_not" => but_please_not}, socket) do
     Mix.shell.info "#{socket.assigns[:peer_id]}: Finding a peer for #{pool_id}::#{chunk}"
-    remote_peer_id = Pool.find_a_peer_for_chunk(pool_id, chunk)
+    remote_peer_id = Pool.find_a_peer_for_chunk(pool_id, chunk, but_please_not)
 
-    {:reply, %{peer_id: remote_peer_id}, socket}
+    {:reply, {:ok, %{peer_id: remote_peer_id}}, socket}
   end
 
   def handle_in("claim_chunk", %{"pool_id" => pool_id, "chunk" => chunk}, socket) do
@@ -48,6 +54,8 @@ defmodule Fuego.PoolChannel do
   end
 
   def terminate(_msg, socket) do
+    Mix.shell.info "#{socket.assigns[:peer_id]}: Dropping peer..."
+
     Pool.drop_peer(socket.assigns[:peer_id]) # drop a peer by id
 
     {:noreply, socket}

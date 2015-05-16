@@ -17,6 +17,8 @@ defmodule Fuego.Router do
 
     get "/", PageController, :index
     get "/🔥", PageController, :home
+    get "/fire", PageController, :home
+    get "/f", PageController, :home
   end
 
   socket "/pm", Fuego do
