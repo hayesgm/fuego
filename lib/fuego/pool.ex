@@ -1,45 +1,5 @@
 defmodule Fuego.Pool do
 
-  # For diagnostics
-  def info(extended \\ false) do
-    :ets.foldl(fn {pool_id, _}, _ ->
-      info_for(pool_id, extended)
-      nil
-    end, nil, :pool_registry)
-  end
-
-  def info_for(pool_id, extended \\ false) do
-    case :ets.lookup(:pool_registry, pool_id) do
-      [{^pool_id, pool}] ->
-        Mix.shell.info ""
-        Mix.shell.error "Pool #{pool_id}: `#{pool[:description]}`"
-        Mix.shell.info "\tLink: http://dev.burn.pm:7700/fire##{pool_id}"
-        Mix.shell.info "\tChunk Size: #{pool[:chunk_size]}B"
-        Mix.shell.info "\tTotal Size: #{pool[:total_size]}B"
-        Mix.shell.info ""
-        Mix.shell.info "\tProcess: #{inspect pool[:pool_chunk_agent]}"
-        Mix.shell.info ""
-        Mix.shell.info "\tCHUNKS (#{length(pool[:chunks])})"
-        Mix.shell.info "\t--------"
-
-        pool_chunk_agent = pool[:pool_chunk_agent]
-
-        Enum.each(pool[:chunks], fn chunk ->
-          peers = Agent.get(pool_chunk_agent, fn dict -> dict[chunk] end)
-
-          unless extended do
-            Mix.shell.info "\t#{String.slice(chunk, 1..8)}: #{length(peers)} peer(s)"
-          else
-            Mix.shell.info "\t#{chunk}: #{length(peers)} peer(s): [#{Enum.join(peers, ",")}]"
-          end
-
-        end)
-
-      [] ->
-        Mix.shell.error "pool #{pool_id} not found..."
-    end
-  end
-
   # Registers a pool that can be retrieved.
   # pool should be a sha-256 sum of the value of the chunks
   # first seeder is responsible for finding peers for a given pool
@@ -63,7 +23,7 @@ defmodule Fuego.Pool do
     {:ok, pool_chunk_agent} = Agent.start fn -> chunk_peers end
     
     :ets.insert(:pool_registry, {pool_id, [chunks: chunks, description: description, chunk_size: chunk_size, total_size: total_size, pool_chunk_agent: pool_chunk_agent]})
-    create_claim_agent(peer_id, peer_claims)
+    get_or_create_claim_agent_for_peer(peer_id, peer_claims)
 
     true
   end
@@ -121,9 +81,13 @@ defmodule Fuego.Pool do
   end
 
   # Gets or creates a new peer
-  def get_or_create_claim_agent_for_peer(peer_id) do
+  def get_or_create_claim_agent_for_peer(peer_id, peer_claims \\ []) do
     case get_claim_agent_for_peer(peer_id) do
-      {:ok, claim_agent} -> {:ok, claim_agent}
+      {:ok, claim_agent} ->
+        # Add claims if any
+        Agent.update(claim_agent, fn list -> list ++ peer_claims end)
+
+        {:ok, claim_agent}
       {:error} -> create_claim_agent(peer_id)
     end
   end
@@ -205,6 +169,46 @@ defmodule Fuego.Pool do
       true
     else
       false
+    end
+  end
+
+  # For diagnostics
+  def info(extended \\ false) do
+    :ets.foldl(fn {pool_id, _}, _ ->
+      info_for(pool_id, extended)
+      nil
+    end, nil, :pool_registry)
+  end
+
+  def info_for(pool_id, extended \\ false) do
+    case :ets.lookup(:pool_registry, pool_id) do
+      [{^pool_id, pool}] ->
+        Mix.shell.info ""
+        Mix.shell.error "Pool #{pool_id}: `#{pool[:description]}`"
+        Mix.shell.info "\tLink: http://dev.burn.pm:7700/fire##{pool_id}"
+        Mix.shell.info "\tChunk Size: #{pool[:chunk_size]}B"
+        Mix.shell.info "\tTotal Size: #{pool[:total_size]}B"
+        Mix.shell.info ""
+        Mix.shell.info "\tProcess: #{inspect pool[:pool_chunk_agent]}"
+        Mix.shell.info ""
+        Mix.shell.info "\tCHUNKS (#{length(pool[:chunks])})"
+        Mix.shell.info "\t--------"
+
+        pool_chunk_agent = pool[:pool_chunk_agent]
+
+        Enum.each(pool[:chunks], fn chunk ->
+          peers = Agent.get(pool_chunk_agent, fn dict -> dict[chunk] end)
+
+          unless extended do
+            Mix.shell.info "\t#{String.slice(chunk, 1..8)}: #{length(peers)} peer(s)"
+          else
+            Mix.shell.info "\t#{chunk}: #{length(peers)} peer(s): [#{Enum.join(peers, ",")}]"
+          end
+
+        end)
+
+      [] ->
+        Mix.shell.error "pool #{pool_id} not found..."
     end
   end
 

@@ -101,6 +101,18 @@ defmodule Fuego.PoolTest do
     assert Pool.find_a_peer_for_chunk(pool_id, hd(chunks)) == nil
   end
 
+  test "#drop_peer after registering a second pool", %{pool_id: pool_id, peer_id: peer_id, chunks: chunks} do
+    pool_2_id = gen_sha
+    pool_2_chunks = [gen_sha]
+
+    true = Pool.register_pool(pool_2_id, peer_id, pool_2_chunks, "pool2", 123, 456)
+
+    Pool.drop_peer(peer_id) # should remove peer from all pools, first and second
+
+    assert Pool.find_a_peer_for_chunk(pool_id, hd(chunks)) == nil
+    assert Pool.find_a_peer_for_chunk(pool_2_id, hd(pool_2_chunks)) == nil
+  end
+
   defp gen_sha do
     rand_string = Hexate.encode(:crypto.rand_bytes(10))
     Hexate.encode(:crypto.hash(:sha256, rand_string))
