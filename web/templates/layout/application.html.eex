@@ -26,10 +26,7 @@
       <%= @inner %>
 
     </div> <!-- /container -->
-    <script src="//crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/sha256.js"></script>
-    <script src='//crypto-js.googlecode.com/svn/tags/3.1.2/build/components/lib-typedarrays-min.js'></script>
-    <script src="//cdn.peerjs.com/0.3/peer.js"></script>
-    <script src="<%= static_path(@conn, "/vendor/db.js") %>"></script>
+    <script src="<%= static_path(@conn, "/js/vendor.js") %>"></script>
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
     <script>require("web/static/js/app")</script>
   </body>

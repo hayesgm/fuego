@@ -3,12 +3,20 @@
   },
   "dependencies": {
     "brunch": "^1.8.1",
+    "react-brunch": "~> 1.0.9",
     "babel-brunch": "^5.1.1",
     "clean-css-brunch": ">= 1.0 < 1.8",
     "css-brunch": ">= 1.0 < 1.8",
+    "envify": "^3.4.0",
     "javascript-brunch": ">= 1.0 < 1.8",
     "sass-brunch": "^1.8.10",
-    "uglify-js-brunch": ">= 1.0 < 1.8"
+    "uglify-js-brunch": ">= 1.0 < 1.8",
+    "react": "^0.13.1",
+    "flux": "^2.0.1",
+    "immutable": "^3.7.1",
+    "keymirror": "^0.1.1",
+    "reactify": "^1.1.0",
+    "react-immutable-render-mixin": "^0.8.1"
   },
   "scripts": {
     "postinstall": "brunch build --production"
