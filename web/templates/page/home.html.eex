@@ -10,6 +10,7 @@
       <div class="col-lg-6">
         <div id="pools"></div>
         <a id="downloadEl"></a>
+        <div id="cinema"></div>
       </div>
     </div>
     

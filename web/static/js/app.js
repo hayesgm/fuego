@@ -9,6 +9,7 @@ import Pool from "./pool"
 
 let poolsEl = document.querySelector('#pools');
 let downloadEl = document.querySelector('a#downloadEl');
+let cinemaEl = document.querySelector('div#cinema');
 let fileInputEl = document.querySelector('input#fileInput');
 let alertEl = document.querySelector("#alert");
 
@@ -53,24 +54,67 @@ function init() {
   debug("ready...");
 }
 
+function getType(pool) {
+  if (pool.description.match(/\.mp4$/i)) {
+    return "video";
+  } else {
+    return "file";
+  }
+}
+
 function preDownload(pool) {
   Pool.getPercentComplete(pool).then((percent) => {
+
     let poolEl = document.querySelector("a#pool" + pool.pool_id) || document.createElement('a');
+    poolEl.href = "javascript:void(0)";
 
     poolEl.addEventListener('click', () => {
-      showDownloadLink(pool);
+      switch (getType(pool)) {
+      case "file":
+        showDownloadLink(pool);  
+        break;
+      case "video":
+        playVideo(pool);
+        break;
+      }
+      
     });
 
     while (poolEl.firstChild) {
       poolEl.removeChild(poolEl.firstChild);
     }
 
-    poolEl.appendChild(document.createTextNode("Download " + pool.description + " (" + pool.total_size + " bytes) [" + percent + "%]"));
+    switch (getType(pool)) {
+      case "file":
+        poolEl.appendChild(document.createTextNode("Download " + pool.description + " (" + pool.total_size + " bytes) [" + percent + "%]"));
+        break;
+      case "video":
+        poolEl.appendChild(document.createTextNode("Play " + pool.description + " (" + pool.total_size + " bytes) [" + percent + "%]"));
+        break;
+    }
 
     poolsEl.appendChild(poolEl);
     poolsEl.appendChild(document.createElement("br"));
   });
 };
+
+function playVideo(pool) {
+  Pool.getPoolBuffers(pool).then((arrayBuffers) => {
+    let blob = new Blob(arrayBuffers)
+
+    let video = document.createElement("video");
+    video.autoplay = true;
+    video.controls = true;
+    video.src = URL.createObjectURL(blob);
+
+    while (cinemaEl.firstChild) {
+      cinemaEl.removeChild(cinemaEl.firstChild);
+    }
+
+    trace("playing", pool.description);
+    cinemaEl.appendChild(video);
+  });
+}
 
 function showDownloadLink(pool) {
   let offset = (() => {
