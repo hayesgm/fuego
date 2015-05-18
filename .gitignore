@@ -25,3 +25,6 @@ erl_crash.dump
 
 # when compiling in IEx (c "file"), you'll get top-level beam files
 *.beam
+bower_components
+fuego/
+*~

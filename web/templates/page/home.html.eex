@@ -1,17 +1,7 @@
 <div class="row" id="top">
   <div class="col-md-3" id="leftNav">
     <div class="row">
-      <div class="col-x-12">
-        <ul id="pools">
-          <li class="active">
-            <span class="name">The Simpsons Season 4, Episode 4.mp4</span>
-            <span class="status finished"/>
-          </li>
-          <li>
-            <span class="name">Game of Thrones, Season 3 Ep 14.mp4</span>
-            <span class="status downloading"/>
-          </li>
-        </ul>
+      <div class="col-x-12" id="navigation">
       </div>
     </div>
 

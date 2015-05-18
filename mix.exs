@@ -35,6 +35,7 @@ defmodule Fuego.Mixfile do
      {:phoenix_html, "~> 1.0"},
      {:phoenix_live_reload, "~> 0.4", only: :dev},
      {:cowboy, "~> 1.0"},
-     {:hexate, "~> 0.5.1"}]
+     {:hexate, "~> 0.5.1"}
+    ]
   end
 end

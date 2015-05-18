@@ -1,11 +1,11 @@
 "use strict";
 
 import {Socket} from "phoenix"
-import Helpers from "./helpers"
-import {trace,debug} from "./logging"
-import db from "./database"
-import Peer from "./peer"
-import Pool from "./pool"
+import Helpers from "./services/helpers"
+import {trace,debug} from "./services/logging"
+import db from "./services/database"
+import Peer from "./services/peer"
+import Pool from "./services/pool"
 
 let poolsEl = document.querySelector('#pools');
 let downloadEl = document.querySelector('a#downloadEl');

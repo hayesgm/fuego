@@ -5,6 +5,16 @@ exports.config = {
       joinTo: {
         'js/app.js': /^(web\/static\/js)/,
         'js/vendor.js': /^(web\/static\/vendor)/
+      },
+      order: {
+        before: [
+          'web/static/vendor/js/jquery.js',
+          'web/static/vendor/js/underscore.js',
+          'web/static/vendor/js/handlebars.js',
+          'web/static/vendor/js/backbone.js',
+          'web/static/vendor/js/sha256.js',
+          'web/static/vendor/js/lib-typedarrays-min.js',
+        ]
       }
       // To use a separate vendor.js bundle, specify two files path
       // https://github.com/brunch/brunch/blob/stable/docs/config.md#files
@@ -23,7 +33,10 @@ exports.config = {
       // }
     },
     stylesheets: {
-      joinTo: 'css/app.css'
+      joinTo: {
+        'css/libraries.css': /^(web\/static\/vendor\/css)/,
+        'css/app.css': /^(web\/static\/css)/
+      }
     },
     templates: {
       joinTo: 'js/app.js'
