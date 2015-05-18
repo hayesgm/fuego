@@ -8,20 +8,14 @@
     <meta name="author" content="">
 
     <title>Burn After Reading</title>
+    <link rel="stylesheet" href="<%= static_path(@conn, "/css/libraries.css") %>">
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
   </head>
 
   <body>
-    <div class="container">
-      <div class="header">
-        <ul class="nav nav-pills pull-right">
-          <li><a href="/🔥">🔥</a></li>
-        </ul>
-        <span class="logo"></span>
-      </div>
-
-      <p id="alert" class="alert alert-info"><%= get_flash(@conn, :info) %></p>
-      <p class="alert alert-danger"><%= get_flash(@conn, :error) %></p>
+    <div class="container-fluid">
+      <% if get_flash(@conn, :info) do %><p id="alert" class="alert alert-info"><%= get_flash(@conn, :info) %></p><% end %>
+      <% if get_flash(@conn, :error) do %><p id="alert" class="alert alert-danger"><%= get_flash(@conn, :error) %></p><% end %>
 
       <%= @inner %>
 

@@ -1,25 +1,58 @@
-<div class="row">
-  <div class="col-lg-6">
-    <h1>Burn after reading</h1>
-
-    <div id="fuego-app-container"></div>
-    <!--
-      <div class="row">
-        <input type="file" id="fileInput">
+<div class="row" id="top">
+  <div class="col-md-3" id="leftNav">
+    <div class="row">
+      <div class="col-x-12">
+        <ul id="pools">
+          <li class="active">
+            <span class="name">The Simpsons Season 4, Episode 4.mp4</span>
+            <span class="status finished"/>
+          </li>
+          <li>
+            <span class="name">Game of Thrones, Season 3 Ep 14.mp4</span>
+            <span class="status downloading"/>
+          </li>
+        </ul>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col-lg-6">
-          <div id="pools"></div>
-          <a id="downloadEl"></a>
-          <div id="cinema"></div>
+    <div class="row" id="bottomNav">
+      <div class="col-md-12">
+        <div class="row">
+          <div class="col-md-12">
+            <button id="upload" type="button" class="btn btn-default btn-lg">Upload</button>
+            <input type="file" id="fileInput">
+          </div>
+        </div>
+        <div class="row">
+          by <a href="https://twitter.com/justHGH">justHGH</a>
         </div>
       </div>
-    -->
-    
+    </div>
   </div>
-</div>
+  <div class="col-md-9" id="main">
+    <h1>The Simpsons Season 4, Episode 4.mp4</h1>
 
-<div class="row">
-  by @justHGH
+    <h4>Download Complete, Seeding</h4>
+
+    <div id="info">
+      <dl class="dl-horizontal">
+        <dt>Network</dt>
+        <dd>5 Peers</dd>
+
+        <dt>Upload</dt>
+        <dd>10 KB/s</dd>
+
+        <dt>Download</dt>
+        <dd>120 KB/s</dd>
+      </dl>
+    </div>
+
+    <div class="row" id="actionArea">
+      <div class="col-lg-6">
+        <button type="button" class="btn btn-default btn-lg">Download</button>
+        <button type="button" class="btn btn-default btn-lg">Play Video</button>
+        <div id="cinema"></div>
+      </div>
+    </div>
+  </div>
 </div>

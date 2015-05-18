@@ -1,0 +1,58 @@
+
+html, body, .container-fluid, #top
+  height: 100%
+
+body
+  color: #222
+  font-family: sans-serif
+
+
+#leftNav
+  color: #ccc
+  padding-top: 80px
+  background-color: #333
+  height: 100%
+
+  ul
+    width: 100%
+    padding-left: 0px
+
+    li
+      width: 100%
+      list-style-type: none
+      font-size: 1.3em
+      min-height: 60px
+
+      .name
+        display: inline-block
+        padding: 16px 10px 10px 10px
+        cursor: pointer
+
+      &.active
+        background-color: #444
+
+      &:hover
+        background-color: #555
+
+  #bottomNav
+    position: absolute
+    bottom: 0px
+    padding-left: 30px
+    padding-bottom: 30px
+    width: 100%
+
+    #upload
+      width: 60%
+      margin-bottom: 30px
+
+    input[type="file"]
+      display: none
+
+#main
+  padding: 100px
+
+  #actionArea
+    margin-top: 100px
+
+#file
+  display: none
