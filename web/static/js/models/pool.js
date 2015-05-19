@@ -1,15 +1,17 @@
-let Pool = Backbone.Model.extend({
-  
-  defaults:{
-    pool_id: '123',
-    chunks: [1,2,3],
-    description: 'Cool'
-  },
-  
-  initialize: function() {
-    console.log('New pool created...');
+import db from "../services/database"
+
+App.Pool = Ember.Object.extend({});
+
+App.Pool.reopenClass({
+
+  findAll: function() {
+    return db.getPools().then((pools) => {
+      return pools.map((pool) => {
+        return App.Pool.create(pool);
+      });
+    });
   }
- 
+
 });
 
-export default Pool;
+export default App.Pool;

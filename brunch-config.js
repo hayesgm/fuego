@@ -11,7 +11,8 @@ exports.config = {
           'web/static/vendor/js/jquery.js',
           'web/static/vendor/js/underscore.js',
           'web/static/vendor/js/handlebars.js',
-          'web/static/vendor/js/backbone.js',
+          'web/static/vendor/js/ember.js',
+          'web/static/vendor/js/ember-template-compiler.js',
           'web/static/vendor/js/sha256.js',
           'web/static/vendor/js/lib-typedarrays-min.js',
         ]
