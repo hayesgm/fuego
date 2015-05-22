@@ -65,7 +65,9 @@ function createPool(pool_id, chunks, description, chunk_size, total_size) {
 
 function getBlob(chunk) {
   return serverPromise.then((server) => {
-    return server.blobs.query('chunk').only(chunk).execute();
+    return server.blobs.query('chunk').only(chunk).execute().then((blob) => {
+      return blob[0];
+    });
   });
 }
 
@@ -100,18 +102,11 @@ function getPool(pool_id) {
 function getAllChunkData(pool_id) {
   return serverPromise.then((server) => {
     return getChunks(pool_id).then(chunks => {
-      console.log(["chunks",chunks]);
-      var promises = chunks.map(chunk => {return getChunkData(chunk.chunk);});
-      console.log(["promises",promises]);
-      return Promise.all(promises);
-    });
-  });
-}
 
-function getChunkData(chunk) {
-  return serverPromise.then((server) => {
-    return server.blobs.query('chunk').only(chunk).execute().then((blob) => {
-      return blob[0];
+      var promises = chunks.map(chunk => {return getBlob(chunk.chunk);});
+      return Promise.all(promises).then((promises) => {
+        return promises;
+      });
     });
   });
 }
@@ -120,11 +115,13 @@ function storeBlob(chunk, data) {
   return serverPromise.then((server) => {
     return server.blobs.query('chunk').only(chunk).execute().then(blobs => {
       if (blobs.length > 0) {
-        return blobs;
+        return blobs[0];
       } else {
         return server.blobs.add({
           chunk: chunk,
           data: data
+        }).then((blob) => {
+          return blob[0];
         });
       }
     });
@@ -141,6 +138,8 @@ function storeChunk(pool_id, chunk, blob_id) {
           chunk: chunk,
           pool_id: pool_id,
           blob_id: blob_id
+        }).then((chunk) => {
+          return chunk[0];
         });
       }
     });
@@ -158,7 +157,6 @@ let Database = {
   getChunk: getChunk,
   getPool: getPool,
   getAllChunkData: getAllChunkData,
-  getChunkData: getChunkData,
   storeBlob: storeBlob,
   storeChunk: storeChunk,
 };

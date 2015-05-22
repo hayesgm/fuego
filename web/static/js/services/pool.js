@@ -2,14 +2,18 @@
 
 import Chan from "./chan";
 import Chunks from "./chunks";
-import db from "./database";
+import db from "../models/database";
 import {trace,debug} from "./logging";
 import Peer from "./peer";
+
+import PoolStore from '../stores/pool_store';
+import ChunkStore from '../stores/chunk_store';
+import BlobStore from '../stores/blob_store';
 
 function refresh(socket, peer_id) {
   // let's look at each pool we know of
 
-  return db.getPools().then((pools) => {
+  return PoolStore.getPools().then((pools) => {
     return Promise.all(pools.map((pool) => {
       // show as a potential downlaod
       return getPercentComplete(pool).then((percent) => {
@@ -35,7 +39,7 @@ function refresh(socket, peer_id) {
 function fetch(socket, peer_id, pool_id) {
   trace("fetching pool", pool_id);
   return Chan.find(socket, peer_id, pool_id).then( ([chan, response]) => {
-    return db.findOrCreatePool(pool_id, response.chunks, response.description, response.chunk_size, response.total_size).then( (pool) => {
+    return PoolStore.findOrCreatePool(pool_id, {pool_id: pool_id, chunks: response.chunks, description: response.description, chunk_size: response.chunk_size, total_size: response.total_size}).then( (pool) => {
       // The server should have given us peers automatically, but these may be stale
       var promises = response.peers.map(chunkPeer => {
         let [chunk,remotePeerId] = chunkPeer;
@@ -91,9 +95,9 @@ function createFromFile(file) {
           // trace("sha", wordArray);
 
           chunkHashes.push(sha);
-          db.storeBlob(sha, e.target.result).then(blob => {
+          BlobStore.storeBlob(sha, e.target.result).then(blob => {
             // debug("blob", blob);
-            chunkMap[sha] = blob[0].blob_id;
+            chunkMap[sha] = blob.blob_id;
 
             if (file.size > offset + e.target.result.byteLength) {
               // repeat
@@ -103,13 +107,13 @@ function createFromFile(file) {
               let pool_id = CryptoJS.SHA256(chunkHashes.join("")).toString();
 
               // TODO: catch
-              db.findOrCreatePool(pool_id, chunkHashes, file.name, Chunks.CHUNK_SIZE, file.size).then((pool) => {
+              PoolStore.findOrCreatePool(pool_id, chunkHashes, file.name, Chunks.CHUNK_SIZE, file.size).then((pool) => {
                 trace("chunk hashes", chunkHashes);
 
                 // Let's store the chunks locally
                 let promises = chunkHashes.map(chunk => {
                   trace("storing chunk", pool_id, chunk, chunkMap[chunk]);
-                  db.storeChunk(pool_id, chunk, chunkMap[chunk]);
+                  ChunkStore.storeChunk(pool_id, chunk, chunkMap[chunk]);
                 });
 
                 // TODO: catch
@@ -135,13 +139,13 @@ function createFromFile(file) {
 function getPercentComplete(pool) {
   let totalChunks = pool.chunks.length;
 
-  return db.getChunks(pool.pool_id).then((chunks) => {
+  return ChunkStore.getChunks(pool.pool_id).then((chunks) => {
     return chunks.length / ( totalChunks / 100.0 );
   });
 }
 
 function getPoolBuffers(pool) {
-  return db.getAllChunkData(pool.pool_id).then(chunkData => {
+  return ChunkStore.getAllChunkData(pool.pool_id).then(chunkData => {
     debug("got pool", pool, chunkData);
 
     // Need to arrange this back into the correct order
@@ -155,13 +159,25 @@ function getPoolBuffers(pool) {
   });
 }
 
+function startDownload(pool) {
+  Pool.getPoolBuffers(pool).then((arrayBuffers) => {
+    let blob = new Blob(arrayBuffers)
+
+    let downloadEl = document.createElement('a');
+    downloadEl.href = URL.createObjectURL(blob);
+    downloadEl.download = pool.description;
+    downloadEl.click();
+  });
+}
+
 let Pool = {
   refresh: refresh,
   fetch: fetch,
   register: register,
   createFromFile: createFromFile,
   getPercentComplete: getPercentComplete,
-  getPoolBuffers: getPoolBuffers
+  getPoolBuffers: getPoolBuffers,
+  startDownload: startDownload
 };
 
 export default Pool;

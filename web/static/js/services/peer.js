@@ -1,10 +1,11 @@
 "use strict";
 
 import {trace,debug} from "./logging";
-import db from "./database";
 import Chan from "./chan";
 import Helpers from "./helpers";
-
+import ChunkStore from "../stores/chunk_store";
+import BlobStore from "../stores/blob_store";
+  
 let PEER_JS_API_KEY = 'dx24ylo616y9zfr';
 let peer_id = Helpers.guid();
 let peers = {};
@@ -25,7 +26,7 @@ if (window.Peer) {
       // TODO: when we don't have the chunk?
 
       trace("Sending peer chunk", pool_id, chunk);
-      db.getChunkData(chunk).then(blob => {
+      BlobStore.getBlob(chunk).then(blob => {
         conn.send([pool_id, chunk, blob.data]);
       });
     });
@@ -78,7 +79,7 @@ function getRemote(remotePeerId, onError) {
 
 // TODO: Is this working?
 function resumeSeeds(socket, peer_id) {
-  return db.getAllChunks().then((chunks) => {
+  return ChunkStore.getAllChunks().then((chunks) => {
     chunks.forEach((chunk) => {
       Chan.find(socket, peer_id, chunk.pool_id).then((chan) => {
         seed(chan, chunk.pool_id, chunk.chunk);

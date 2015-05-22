@@ -8,11 +8,6 @@ exports.config = {
       },
       order: {
         before: [
-          'web/static/vendor/js/jquery.js',
-          'web/static/vendor/js/underscore.js',
-          'web/static/vendor/js/handlebars.js',
-          'web/static/vendor/js/ember.js',
-          'web/static/vendor/js/ember-template-compiler.js',
           'web/static/vendor/js/sha256.js',
           'web/static/vendor/js/lib-typedarrays-min.js',
         ]
@@ -66,7 +61,8 @@ exports.config = {
     // See: http://babeljs.io/docs/usage/options/ 
     babel: {
       // Do not use ES6 compiler in vendor code
-      ignore: [/^(web\/static\/vendor)/]
+      ignore: [/^(web\/static\/vendor)/],
+      pattern: /\.(js|jsx)$/,
     }
   }
 };

@@ -1,9 +1,11 @@
 "use strict";
 
 import {trace,debug} from "./logging"
-import db from "./database"
 import Peer from "./peer"
 import {getOpenChannel} from "./chan"
+
+import BlobStore from '../stores/blob_store'
+import ChunkStore from '../stores/chunk_store'
 
 let CHUNK_SIZE = Math.pow(2, 18); // 256KB chunks
 let SIMULTANEOUS_DOWNLOADS = 5;
@@ -29,7 +31,7 @@ function fetch(pool_id, chunk, remotePeerId) {
     };
   });
 
-  db.getChunk(chunk).then(chunkObj => {
+  ChunkStore.getChunk(chunk).then(chunkObj => {
     if (chunkObj) {
       debug("already know of chunk", chunkObj.chunk)
       downloadPromises[pool_id][chunk].resolve(chunk);
@@ -140,10 +142,10 @@ function download(pool_id, chunk, remotePeerId) {
       // TODO Verify SHA-256 sum of chunk
 
       // Store data in local object
-      db.storeBlob(chunk, data).then(blob => {
-        debug("stored blob", blob[0].blob_id);
+      BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
+        debug("stored blob", blob.blob_id);
 
-        db.storeChunk(pool_id, chunk, blob[0].blob_id).then(chunkObj => {
+        ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
 
           debug("stored chunk", chunkObj);
 

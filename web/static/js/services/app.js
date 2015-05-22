@@ -3,9 +3,9 @@
 import {Socket} from "phoenix"
 import Helpers from "./services/helpers"
 import {trace,debug} from "./services/logging"
-import db from "./services/database"
 import Peer from "./services/peer"
 import Pool from "./services/pool"
+import db from "./services/database"
 
 let poolsEl = document.querySelector('#pools');
 let downloadEl = document.querySelector('a#downloadEl');

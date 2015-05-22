@@ -31,6 +31,7 @@ function find(socket, peer_id, pool_id) {
         channels[pool_id] = [chan,reply];
         resolve(channels[pool_id]);
       }).receive("error", (err) => {
+        trace("error joining channel", err);
         reject(err);
       });
     }

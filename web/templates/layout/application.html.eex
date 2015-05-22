@@ -53,15 +53,14 @@
       </div>
     </script>
 
-    <script type="text/x-handlebars"  data-template-name="application">
-      <div class="container-fluid">
-        <% if get_flash(@conn, :info) do %><p id="alert" class="alert alert-info"><%= get_flash(@conn, :info) %></p><% end %>
-        <% if get_flash(@conn, :error) do %><p id="alert" class="alert alert-danger"><%= get_flash(@conn, :error) %></p><% end %>
+    <div class="container-fluid">
+      <% if get_flash(@conn, :info) do %><p id="alert" class="alert alert-info"><%= get_flash(@conn, :info) %></p><% end %>
+      <% if get_flash(@conn, :error) do %><p id="alert" class="alert alert-danger"><%= get_flash(@conn, :error) %></p><% end %>
 
-        <%= @inner %>
+      <%= @inner %>
 
-      </div> <!-- /container -->
-    </script>
+    </div> <!-- /container -->
+
     <script src="<%= static_path(@conn, "/js/vendor.js") %>"></script>
     <script src="<%= static_path(@conn, "/js/app.js") %>"></script>
     <script>require("web/static/js/app")</script>
