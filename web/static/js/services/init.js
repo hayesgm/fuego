@@ -2,6 +2,7 @@ import {Socket} from "phoenix"
 import Peer from "./peer"
 import Pool from "./pool"
 import {trace,debug} from "./logging";
+import db from "../models/database";
 
 let socket = new Socket("/pm");
 
@@ -12,6 +13,19 @@ socket.connect();
 Pool.refresh(socket, Peer.peer_id);
 
 debug("ready...");
+
+window.fuego = function() {
+  return {
+    peer: Peer,
+    db: {
+      peer_id: Peer.peer_id,
+      server: db.getServer(),
+      pools: db.getServer().then((server) => { return server.pools.query().all().execute().then(x => {trace("pools",x)}) }),
+      chunks: db.getServer().then((server) => { return server.chunks.query().all().execute().then(x => {trace("chunks",x)}) }),
+      blobs: db.getServer().then((server) => { return server.blobs.query().all().execute().then(x => {trace("blobs",x)}) })
+    }
+  };
+};
 
 let Init = {
   socket: socket,

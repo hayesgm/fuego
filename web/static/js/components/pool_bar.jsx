@@ -1,38 +1,27 @@
 import React from '../react'
 import {Link} from '../react-router'
 import PoolStore from '../stores/pool_store'
+import {debug} from '../services/logging'
+import Pool from '../services/pool'
+import {ProgressBar} from './progress_bar'
 
 class PoolBarList extends React.Component {
   constructor(props) {
     super(props);
-    
-    this.state = {pools: []};
   };
 
-  componentDidMount() {
-    this.unsubscribe = PoolStore.listen(this.onPoolChange.bind(this));
-    this.onPoolChange();
-  }
-
-  componentWillUnmount() {
-    this.unsubscribe();
-  }
-
-  onPoolChange() {
-    PoolStore.getPools().then((pools) => {
-      this.setState({
-        pools: pools
-      });
-    });
-  }
-
   render() {
-    var poolList = this.state.pools.map((pool) => {
+    
+    var poolList = this.props.pools.map((pool) => {
+      let chunks = this.props.chunks[pool.pool_id] || [];
+
       return (
         <li key={pool.pool_id}>
           <Link to="pool" params={{pool_id: pool.pool_id}}>
-            <span className="name">{pool.description}</span>
-            <span className="status {pool.status}" />
+            <div className="name">
+              <div className="desc">{pool.description}</div>
+              <ProgressBar pool={pool} chunks={chunks}/>
+            </div>
           </Link>
         </li>
       )
@@ -51,12 +40,31 @@ export class PoolBar extends React.Component {
     super(props);
   }
 
+  selectFile() {
+    React.findDOMNode(this.refs.file).click();
+  }
+
+  uploadFile(e) {
+    var fileInput = e.target;
+    var file = fileInput.files[0];
+
+    debug('file', [file.name, file.size, file.type, file.lastModifiedDate]);
+    
+    if (file.size === 0 && !file.name) {
+      return; // do nothing
+    } else {
+      debug("uploading", file);
+
+      this.props.uploadFile(file);
+    }
+  }
+
   render() {
     return (
       <div className="col-xs-5 col-sm-4" id="leftNav">
         <div className="row">
           <div className="col-xs-12" id="navigation">
-            <PoolBarList/>
+            <PoolBarList pools={this.props.pools} chunks={this.props.chunks}/>
           </div>
         </div>
 
@@ -64,8 +72,8 @@ export class PoolBar extends React.Component {
           <div className="col-md-12">
             <div className="row">
               <div className="col-md-12">
-                <button id="upload" type="button" className="btn btn-default btn-lg">Upload</button>
-                <input type="file" id="fileInput" />
+                <button id="upload" type="button" className="btn btn-default btn-lg" onClick={this.selectFile.bind(this)}>Upload</button>
+                <input type="file" id="fileInput" ref="file" onChange={this.uploadFile.bind(this)}/>
               </div>
             </div>
             <div className="row">

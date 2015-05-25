@@ -98,57 +98,6 @@ function preDownload(pool) {
   });
 };
 
-function playVideo(pool) {
-  Pool.getPoolBuffers(pool).then((arrayBuffers) => {
-    let blob = new Blob(arrayBuffers)
-
-    let video = document.createElement("video");
-    video.autoplay = true;
-    video.controls = true;
-    video.src = URL.createObjectURL(blob);
-
-    while (cinemaEl.firstChild) {
-      cinemaEl.removeChild(cinemaEl.firstChild);
-    }
-
-    trace("playing", pool.description);
-    cinemaEl.appendChild(video);
-  });
-}
-
-function showDownloadLink(pool) {
-  let offset = (() => {
-    var startTime = new Date().valueOf();
-    return () => {
-      return "(+" + ( new Date().valueOf() - startTime ) + "ms)";
-    };
-  })();
-
-  debug("gathering pool buffers", offset());
-  Pool.getPoolBuffers(pool).then((arrayBuffers) => {
-    debug("got pool buffers", offset());
-
-    let blob = new Blob(arrayBuffers)
-
-    debug("created blob", offset());
-
-    downloadEl.href = URL.createObjectURL(blob);
-
-    debug("create object url", offset());
-    downloadEl.download = pool.description;
-
-    let text = 'Click to download ' + pool.description + "("+pool.total_size+" bytes)";
-
-    while (downloadEl.firstChild) {
-      downloadEl.removeChild(downloadEl.firstChild);
-    }
-
-    downloadEl.appendChild(document.createTextNode(text));
-
-    debug("appended link", offset());
-  });
-}
-
 function showShare(pool) {
   let text = 'Pool created for `'+pool.description+'`, to share: ' + window.location.toString().replace("%F0%9F%94%A5","🔥").replace(/#.*/i,"") + "#" + pool.pool_id;
 

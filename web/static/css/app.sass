@@ -34,8 +34,9 @@ body
         padding: 16px 10px 10px 10px
         cursor: pointer
 
-      &.active
-        background-color: #444
+      a
+        &.active
+          color: #eee
 
       &:hover
         background-color: #555
@@ -69,3 +70,27 @@ body
 
   img
     width: 100%
+
+.rgChart
+  display: flex
+  flex-flow: row
+  width: 200px
+
+  div
+    height: 10px
+    flex: 1 100%
+
+    &.green
+      background-color: #3c3
+
+    &.red
+      background-color: #c33
+
+.progressBar
+  height: 5px
+  width: 100%
+  margin-top: 10px
+
+  .inner
+    background-color: #1a1
+    height: 100%

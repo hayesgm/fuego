@@ -2,48 +2,31 @@ import React from '../react'
 import {trace,debug} from "../services/logging"
 import PoolStore from '../stores/pool_store'
 import {Cinema} from './cinema'
+import {RGChart} from './rg_chart'
 import ChunkStore from '../stores/chunk_store'
 
 export class PoolView extends React.Component {
   constructor(props) {
     super(props);
-    
-    this.state = {pools: []};
+
+    this.state = {
+      pool: null,
+      poolChunks: [],
+    }
   };
 
-  componentDidMount() {
-    this.unsubscribePool = PoolStore.listen(this.onPoolChange.bind(this));
-    this.unsubscribeChunk = ChunkStore.listen(this.onPoolChange.bind(this));
-
-    // Start it off
-    this.onPoolChange();
-  }
-
-  componentWillUnmount() {
-    this.unsubscribePool();
-    this.unsubscribeChunk();
-  }
-
-  onPoolChange() {
-    PoolStore.getPools().then((pools) => {
-      this.setState({
-        pools: pools
-      });
-
-      // And find our specific pool
-      this.onPoolIdChange(this.props);
-    });
-  }
-
   onPoolIdChange(props) {
-    let pool = this.state.pools.filter((pool) => {
+    let pool = this.props.pools.filter((pool) => {
       return pool.pool_id == props.params.pool_id;
     })[0];
 
     if (pool) {
-      // good, we're done
+      let poolChunks = this.props.chunks[pool.pool_id] || [];
+
       this.setState({
-        pool: pool
+        pool: pool,
+        poolChunks: poolChunks,
+        percentComplete: Math.round(poolChunks.length / ( pool.chunks.length / 100.0 ) ),
       });
     } else {
       this.props.fetchPool(props.params.pool_id);
@@ -54,6 +37,16 @@ export class PoolView extends React.Component {
     this.onPoolIdChange(props)
   }
 
+  percentComplete() {
+    if (this.state.pool.chunks.length > 0) {
+      return (
+        <span>{this.state.percentComplete}%</span>
+      );
+    } else {
+      return (<span>N/A</span>);
+    }
+  }
+
   render() {    
     debug("pool", this.state.pool);
 
@@ -61,11 +54,21 @@ export class PoolView extends React.Component {
       return <div>Loading...</div>;
     } else {
 
+      if (this.state.percentComplete == 100) {
+        let downloadStatus = (
+          <span>Download Complete, Seeding</span>
+        );
+      } else {
+        let downloadStatus = (
+          <span>Downloading...</span>
+        );
+      }
+
       return (
         <div className="poolView">
           <div className="header">
             <h1>{this.state.pool.description}</h1>
-            <h4>Download Complete, Seeding</h4>
+            <h4>{status}</h4>
           </div>
 
           <div id="info">
@@ -78,12 +81,16 @@ export class PoolView extends React.Component {
 
               <dt>Download</dt>
               <dd>120 KB/s</dd>
+
+              <dt>Status ({this.percentComplete()})</dt>
+              <dd><RGChart pool={this.state.pool} chunks={this.state.poolChunks} /></dd>
+
             </dl>
           </div>
 
           <div className="row" id="actionArea">
             <div className="col-lg-12">
-              <Cinema pool={this.state.pool} />
+              <Cinema pool={this.state.pool} chunks={this.state.poolChunks}/>
             </div>
           </div>
         </div>

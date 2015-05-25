@@ -9,14 +9,27 @@ export class Cinema extends React.Component {
     super(props);
     
     this.state = {url: null};
-    this.fetchData(props.pool)
   }
 
   componentWillReceiveProps(props) {
-    this.fetchData(props.pool);
+    debug("cinema props", this.state.url, props, this.props);
+    if (this.props.pool.pool_id != props.pool.pool_id) {
+      // We've changed pools we're looking at, always re-fetch
+      this.fetchData(props.pool);
+    } else {
+      // We're looking at the same pool, see if we should fetch if we have a complete download
+
+      if (this.state.url == null) { // only bother if we don't have a url built
+        if (props.pool.chunks.length == props.chunks.length) { // only build if we have a complete download
+          this.fetchData(props.pool); // download that m-f
+        }
+      }
+    }
   }
 
   fetchData(pool) {
+    debug("re-fetching data for cinema");
+
     Pool.getPoolBuffers(pool).then((arrayBuffers) => {
       let blob = new Blob(arrayBuffers);
       let url = URL.createObjectURL(blob);

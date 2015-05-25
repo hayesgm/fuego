@@ -52,7 +52,7 @@ if (window.Peer) {
 }
 
 function seed(chan, pool_id, chunk) {
-  trace("seeding", pool_id, chunk);
+  // debug("seeding", pool_id, chunk);
   chan.push("claim_chunk", {pool_id: pool_id, chunk: chunk});
 };
 
@@ -89,6 +89,7 @@ function resumeSeeds(socket, peer_id) {
 };
 
 let p = {
+  peer: peer,
   seed: seed,
   peer_id: peer_id,
   getRemote: getRemote,
