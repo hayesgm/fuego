@@ -59,11 +59,11 @@ export class PoolView extends React.Component {
     } else {
 
       if (this.state.percentComplete == 100) {
-        let downloadStatus = (
+        var downloadStatus = (
           <span>Download Complete, Seeding</span>
         );
       } else {
-        let downloadStatus = (
+        var downloadStatus = (
           <span>Downloading...</span>
         );
       }
@@ -72,7 +72,7 @@ export class PoolView extends React.Component {
         <div className="poolView">
           <div className="header">
             <h1>{this.state.pool.description}</h1>
-            <h4>{status}</h4>
+            <h4>{downloadStatus}</h4>
           </div>
 
           <div id="info">
