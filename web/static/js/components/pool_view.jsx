@@ -2,8 +2,8 @@ import React from '../react'
 import {trace,debug} from "../services/logging"
 import PoolStore from '../stores/pool_store'
 import {Cinema} from './cinema'
-import {RGChart} from './rg_chart'
 import ChunkStore from '../stores/chunk_store'
+import {NetworkStats} from './network_stats'
 
 export class PoolView extends React.Component {
   constructor(props) {
@@ -13,7 +13,9 @@ export class PoolView extends React.Component {
       pool: null,
       poolChunks: [],
       poolsLoaded: false
-    }
+    };
+
+
   };
 
   onPoolIdChange(props) {
@@ -37,18 +39,7 @@ export class PoolView extends React.Component {
   }
 
   componentWillReceiveProps(props) {
-    debug("props changing", props);
     this.onPoolIdChange(props)
-  }
-
-  percentComplete() {
-    if (this.state.pool.chunks.length > 0) {
-      return (
-        <span>{this.state.percentComplete}%</span>
-      );
-    } else {
-      return (<span>N/A</span>);
-    }
   }
 
   render() {    
@@ -75,26 +66,11 @@ export class PoolView extends React.Component {
             <h4>{downloadStatus}</h4>
           </div>
 
-          <div id="info">
-            <dl className="dl-horizontal">
-              <dt>Network</dt>
-              <dd>5 Peers</dd>
-
-              <dt>Upload</dt>
-              <dd>10 KB/s</dd>
-
-              <dt>Download</dt>
-              <dd>120 KB/s</dd>
-
-              <dt>Status ({this.percentComplete()})</dt>
-              <dd><RGChart pool={this.state.pool} chunks={this.state.poolChunks} /></dd>
-
-            </dl>
-          </div>
+          <NetworkStats pool={this.state.pool} poolChunks={this.state.poolChunks} percentComplete={this.state.percentComplete}/>
 
           <div className="row" id="actionArea">
             <div className="col-lg-12">
-              <Cinema pool={this.state.pool} chunks={this.state.poolChunks}/>
+              <Cinema pool={this.state.pool} chunks={this.state.poolChunks} />
             </div>
           </div>
         </div>

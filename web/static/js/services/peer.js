@@ -12,16 +12,23 @@ let peers = {};
 let errorHandlers = {};
 let errors = {};
 let peer = null;
+let activeUploads = [];
 
 if (window.Peer) {
   peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: 3}); // optional for now
 
   // "Seeder" being asked for a chunk
   peer.on('connection', function(conn) {
+    conn.on('close', function() {
+      activeUploads = activeUploads.filter(d => { return d[1] == conn; }); // remove ourselves
+    });
+
     conn.on('data', function(data){
       debug("peer data", data);
 
       var [pool_id, chunk] = data;
+
+      activeUploads.push([pool_id, conn]); // add ourselves for stat tracking
 
       // TODO: when we don't have the chunk?
 
@@ -64,6 +71,7 @@ function connectRemote(remotePeerId, onError) {
   return peers[remotePeerId] = dataConnection;
 };
 
+// todo: track when a pool is finished which peers we can disconnect from
 function getRemote(remotePeerId, onError) {
   // If we already saw an error, call it right away. We're getting close to a promise here.
   if (errors[remotePeerId]) {
@@ -88,13 +96,18 @@ function resumeSeeds(socket, peer_id) {
   });
 };
 
+function getActiveUploads() {
+  return activeUploads;
+}
+
 let p = {
   peer: peer,
   seed: seed,
   peer_id: peer_id,
   getRemote: getRemote,
   connectRemote: connectRemote,
-  resumeSeeds: resumeSeeds
+  resumeSeeds: resumeSeeds,
+  getActiveUploads: getActiveUploads
 };
 
 export default p;

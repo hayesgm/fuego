@@ -15,6 +15,7 @@ let chunkQueue = [];
 
 // Chunks we're downloading
 let activeDownloads = [];
+
 let downloadPromises = {};
 
 let badPeers = [];
@@ -69,7 +70,7 @@ function download(pool_id, chunk, remotePeerId) {
   // TODO: remotePeerId should be optional
 
   // This is now being downloaded
-  activeDownloads.push([chunk, remotePeerId]);
+  activeDownloads.push([pool_id, chunk, remotePeerId]);
 
   let reconnect = (err) => {
     trace("error downloading", chunk, "from peer", remotePeerId, "going to try new remote peer", err);
@@ -168,8 +169,13 @@ function download(pool_id, chunk, remotePeerId) {
   }
 }
 
+function getActiveDownloads() {
+  return activeDownloads;
+}
+
 let Chunks = {
   fetch: fetch,
+  getActiveDownloads: getActiveDownloads,
   CHUNK_SIZE: CHUNK_SIZE
 };
 
