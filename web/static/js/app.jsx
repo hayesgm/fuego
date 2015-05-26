@@ -55,6 +55,7 @@ class App extends React.Component {
 
       this.setState({
         pools: pools,
+        poolsLoaded: true,
       });
     });
   }
@@ -85,7 +86,7 @@ class App extends React.Component {
       <div className="full row">
         <PoolBar uploadFile={this.uploadFile.bind(this)} pools={this.state.pools} chunks={this.state.chunks}/>
         <div className="col-xs-7 col-sm-8" id="main">
-          <RouteHandler fetchPool={this.fetchPool} pools={this.state.pools} chunks={this.state.chunks} />
+          <RouteHandler fetchPool={this.fetchPool} pools={this.state.pools} chunks={this.state.chunks} poolsLoaded={this.state.poolsLoaded} />
         </div>
       </div>
     )

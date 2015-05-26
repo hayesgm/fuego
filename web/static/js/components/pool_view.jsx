@@ -12,16 +12,17 @@ export class PoolView extends React.Component {
     this.state = {
       pool: null,
       poolChunks: [],
+      poolsLoaded: false
     }
   };
 
   onPoolIdChange(props) {
-    let pool = this.props.pools.filter((pool) => {
+    let pool = props.pools.filter((pool) => {
       return pool.pool_id == props.params.pool_id;
     })[0];
 
     if (pool) {
-      let poolChunks = this.props.chunks[pool.pool_id] || [];
+      let poolChunks = props.chunks[pool.pool_id] || [];
 
       this.setState({
         pool: pool,
@@ -29,11 +30,14 @@ export class PoolView extends React.Component {
         percentComplete: Math.round(poolChunks.length / ( pool.chunks.length / 100.0 ) ),
       });
     } else {
-      this.props.fetchPool(props.params.pool_id);
+      if (props.poolsLoaded) {
+        props.fetchPool(props.params.pool_id);
+      }
     }
   }
 
   componentWillReceiveProps(props) {
+    debug("props changing", props);
     this.onPoolIdChange(props)
   }
 
