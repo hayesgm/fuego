@@ -102,7 +102,7 @@ defmodule Fuego.Pool do
 
       case Enum.shuffle(peers) do
         [h|_] -> [chunk, h]
-        [] -> nil
+        [] -> [chunk, nil]
       end
     end)
 
