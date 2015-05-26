@@ -15,6 +15,9 @@ export class Cinema extends React.Component {
     debug("cinema props", this.state.url, props, this.props);
     if (this.props.pool.pool_id != props.pool.pool_id) {
       // We've changed pools we're looking at, always re-fetch
+      this.setState({
+        url: null
+      });
       this.fetchData(props.pool);
     } else {
       // We're looking at the same pool, see if we should fetch if we have a complete download
