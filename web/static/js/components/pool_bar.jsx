@@ -72,7 +72,7 @@ export class PoolBar extends React.Component {
           <div className="col-md-12">
             <div className="row">
               <div className="col-md-12">
-                <button id="upload" type="button" className="btn btn-default btn-lg" onClick={this.selectFile.bind(this)}>Upload</button>
+                <button id="upload" type="button" className="btn btn-default btn-lg" onClick={this.selectFile.bind(this)}>Add Pool</button>
                 <input type="file" id="fileInput" ref="file" onChange={this.uploadFile.bind(this)}/>
               </div>
             </div>
