@@ -44,6 +44,7 @@ function fetch(socket, peer_id, pool_id) {
       debug("response", response);
       var promises = response.peers.map(chunkPeer => {
         debug("chunk peer", chunkPeer);
+
         let [chunk,remotePeerId] = chunkPeer;
 
         return Chunks.fetch(pool_id, chunk, remotePeerId).then((chunk) => {
@@ -71,7 +72,7 @@ function register(socket, peer_id, pool) {
       pool.chunks.forEach((chunk) => {
         Peer.seed(chan, pool.pool_id, chunk);
       });
-
+ 
       resolve(pool);
     });
   });

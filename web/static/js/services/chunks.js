@@ -96,71 +96,75 @@ function download(pool_id, chunk, remotePeerId) {
       .receive("error", (reasons) => console.log("create failed", reasons) );
   };
 
-  // We will re-use an existing connection, if given
-  let remotePeer = Peer.getRemote(remotePeerId, reconnect);
-
-  if (remotePeer) {
-    debug("using existing connection", remotePeerId);
-
-    // Just ask for the given chunk if we're already connected
-    if (remotePeer.open) {
-      remotePeer.send([pool_id,chunk]);
-    } else {
-      // We may still have to wait, though...
-      remotePeer.on('open', () => {
-        remotePeer.send([pool_id,chunk]);
-      });
-    }
+  if (remotePeerId == null) {
+    reconnect(); // we didn't have a peer, let's try again
   } else {
-    debug("connecting to peer", remotePeerId);
-    let conn = Peer.connectRemote(remotePeerId, reconnect);
+    // We will re-use an existing connection, if given
+    let remotePeer = Peer.getRemote(remotePeerId, reconnect);
 
-    conn.on('close', () => {
-      trace('webrtc closed');
-    });
+    if (remotePeer) {
+      debug("using existing connection", remotePeerId);
 
-    conn.on('disconnected', () => {
-      trace('webrtc disconnected');
-    });
+      // Just ask for the given chunk if we're already connected
+      if (remotePeer.open) {
+        remotePeer.send([pool_id,chunk]);
+      } else {
+        // We may still have to wait, though...
+        remotePeer.on('open', () => {
+          remotePeer.send([pool_id,chunk]);
+        });
+      }
+    } else {
+      debug("connecting to peer", remotePeerId);
+      let conn = Peer.connectRemote(remotePeerId, reconnect);
 
-    conn.on('error', (err) => {
-      // TODO
-      // We're going to need to find other peers when we have a WebRTC error
-      // There's going to obviously be a ton of heuristics around "good peers"
-      // "blacklisted peers", etc. The server may want information on good/bad
-      // peers so it can take out dead nodes from the system. (when error rate > THRESHOLD)
-      trace('webrtc error', err);
-      releaseDownload(pool_id, chunk);
-      downloadPromises[pool_id][chunk].reject();
-    });
+      conn.on('close', () => {
+        trace('webrtc closed');
+      });
 
-    conn.on('data', (message) => {
-      let [pool_id, chunk, data] = message;
+      conn.on('disconnected', () => {
+        trace('webrtc disconnected');
+      });
 
-      debug("rec'd", pool_id, chunk, "from", remotePeerId);
+      conn.on('error', (err) => {
+        // TODO
+        // We're going to need to find other peers when we have a WebRTC error
+        // There's going to obviously be a ton of heuristics around "good peers"
+        // "blacklisted peers", etc. The server may want information on good/bad
+        // peers so it can take out dead nodes from the system. (when error rate > THRESHOLD)
+        trace('webrtc error', err);
+        releaseDownload(pool_id, chunk);
+        downloadPromises[pool_id][chunk].reject();
+      });
 
-      // TODO Verify SHA-256 sum of chunk
+      conn.on('data', (message) => {
+        let [pool_id, chunk, data] = message;
 
-      // Store data in local object
-      BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
-        debug("stored blob", blob.blob_id);
+        debug("rec'd", pool_id, chunk, "from", remotePeerId);
 
-        ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+        // TODO Verify SHA-256 sum of chunk
 
-          debug("stored chunk", chunkObj);
+        // Store data in local object
+        BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
+          debug("stored blob", blob.blob_id);
 
-          releaseDownload(pool_id, chunk);
-          downloadPromises[pool_id][chunk].resolve(chunk);
+          ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+
+            debug("stored chunk", chunkObj);
+
+            releaseDownload(pool_id, chunk);
+            downloadPromises[pool_id][chunk].resolve(chunk);
+          });
         });
       });
-    });
 
-    // When we connect, let's ask for a chunk immediately
-    conn.on('open', () => {
-      conn.send([pool_id,chunk]);
-    });
+      // When we connect, let's ask for a chunk immediately
+      conn.on('open', () => {
+        conn.send([pool_id,chunk]);
+      });
 
-    // TODO: If we can't disconnect, inform server?
+      // TODO: If we can't disconnect, inform server?
+    }
   }
 }
 
