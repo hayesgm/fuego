@@ -46,7 +46,7 @@ function fetch(socket, peer_id, pool_id) {
         debug("chunk peer", chunkPeer);
 
         let [chunk,remotePeerId] = chunkPeer;
-        let retryInterval = 3000;
+        let retryInterval = 10000;
 
         let fetchChunk = function() {
           return Chunks.fetch(pool_id, chunk, remotePeerId).then((chunk) => {
@@ -60,8 +60,14 @@ function fetch(socket, peer_id, pool_id) {
             fetchChunk().then((chunk) => {
               return resolve(chunk);
             }).catch(() => {
-              debug("failed to fetch chunk, retrying in " + retryInterval / 1000.0 + " seconds...");
-              setTimeout(f, retryInterval);
+              PoolStore.getPool(pool_id).then((p) => {
+                if (p) {
+                  debug("failed to fetch chunk, retrying in " + retryInterval / 1000.0 + " seconds...");
+                  setTimeout(f, retryInterval);
+                } else {
+                  debug("failed to fetch chunk, but pool has been destroyed");
+                }
+              });
             });
           };
 

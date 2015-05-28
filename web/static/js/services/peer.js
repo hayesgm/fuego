@@ -17,18 +17,22 @@ let activeUploads = [];
 if (window.Peer) {
   peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: 3}); // optional for now
 
-  // "Seeder" being asked for a chunk
   peer.on('connection', function(conn) {
     conn.on('close', function() {
-      activeUploads = activeUploads.filter(d => { return d[1] == conn; }); // remove ourselves
+      debug("removing peer", conn, conn.remotePeerId);
+      delete peers[conn.remotePeerId];
+      debug("now", peers);
+
+      activeUploads = activeUploads.filter(d => { return d[1] == conn.remotePeerId; }); // remove ourselves
     });
 
+    // "Seeder" being asked for a chunk
     conn.on('data', function(data){
       debug("peer data", data);
 
       var [pool_id, chunk] = data;
 
-      activeUploads.push([pool_id, conn]); // add ourselves for stat tracking
+      activeUploads.push([pool_id, conn.remotePeerId, conn]); // add ourselves for stat tracking
 
       // TODO: when we don't have the chunk?
 
@@ -76,6 +80,7 @@ function connectRemote(remotePeerId, onError) {
   errorHandlers[remotePeerId] = [onError]; // set error handlers
 
   let dataConnection = peer.connect(remotePeerId);
+  dataConnection.remotePeerId = remotePeerId; // for book-keeping
 
   return peers[remotePeerId] = dataConnection;
 };

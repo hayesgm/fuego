@@ -42,7 +42,7 @@ export class NetworkStats extends React.Component {
     let downloadRemotes = getActiveDownloads().filter(a => { return a[0] == pool.pool_id; });
     let downloadRemoteConnections = downloadRemotes.map(r => { return peer.connections[r[2]][0].pc });
 
-    let uploadRemoteConnections = getActiveUploads().filter(a => { return a[0] == pool.pool_id; }).map(a => { return a[1].pc; });
+    let uploadRemoteConnections = getActiveUploads().filter(a => { return a[0] == pool.pool_id; }).map(a => { return a[2].pc; });
 
     // from http://stackoverflow.com/questions/1960473/unique-values-in-an-array
     function onlyUnique(value, index, self) {

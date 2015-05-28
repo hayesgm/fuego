@@ -51,7 +51,7 @@ function fetch(pool_id, chunk, remotePeerId) {
 
 function releaseDownload(pool_id, chunk) {
   // release this chunk
-  activeDownloads = activeDownloads.filter(a => { return a[0] == pool_id && a[1] == chunk; });
+  activeDownloads = activeDownloads.filter(a => { return a[0] !== pool_id || a[1] !== chunk; });
 
   debug("freed chunk..", pool_id, chunk, activeDownloads);
 
@@ -65,7 +65,7 @@ function releaseDownload(pool_id, chunk) {
 }
 
 function download(pool_id, chunk, remotePeerId) {
-  debug("downloading chunk", pool_id, chunk);
+  debug("downloading chunk", pool_id, chunk, "from", remotePeerId);
 
   // TODO: remotePeerId should be optional
 
