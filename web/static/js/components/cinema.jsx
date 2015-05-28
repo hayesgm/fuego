@@ -8,7 +8,10 @@ export class Cinema extends React.Component {
   constructor(props) {
     super(props);
     
-    this.state = {url: null};
+    this.state = {
+      buffers: null,
+      url: null,
+    };
 
     // We may want to immediately set the state, which we have to do after this returns
     setTimeout(() => {
@@ -20,9 +23,8 @@ export class Cinema extends React.Component {
     debug("cinema props", this.state.url, props, this.props);
     if (this.props.pool.pool_id != props.pool.pool_id) {
       // We've changed pools we're looking at, always re-fetch
-      this.setState({
-        url: null
-      });
+      this.clearURL();
+
       this.fetchData(props.pool);
     } else {
       // We're looking at the same pool, see if we should fetch if we have a complete download
@@ -35,6 +37,21 @@ export class Cinema extends React.Component {
     }
   }
 
+  componentWillUnmount() {
+    this.clearURL();
+  }
+
+  clearURL() {
+    if (this.state.url) {
+      // clear the url
+      URL.revokeObjectURL(this.state.url);
+      this.setState({
+        buffers: null,
+        url: null,
+      });
+    }
+  }
+
   fetchData(pool) {
     debug("re-fetching data for cinema");
 
@@ -43,9 +60,9 @@ export class Cinema extends React.Component {
       let url = URL.createObjectURL(blob);
 
       this.setState({
-        url: url
+        buffers: arrayBuffers,
+        url: url,
       });
-      this.render();
     });
   }
 
@@ -55,6 +72,19 @@ export class Cinema extends React.Component {
     this.setState({
       showVideo: showVideo
     });
+  }
+
+  joinBuffers(buffers) {
+    let length = buffers.reduce((res,b) => { return res + b.byteLength; }, 0);
+    let res = new Uint8Array(length);
+    let pos = 0;
+
+    buffers.forEach((buffer) => {
+      res.set(new Uint8Array(buffer), pos);
+      pos += buffer.byteLength;
+    });
+
+    return String.fromCharCode.apply(null, new Uint16Array(res));;
   }
 
   render() {
@@ -81,6 +111,12 @@ export class Cinema extends React.Component {
     if (this.props.pool.description.match(/\.(png|gif|jpg)$/i)) {
       cinema.push(
         <img key="image" src={this.state.url} />
+      );
+    }
+
+    if (this.props.pool.description.match(/\.(md)$/i)) {
+      cinema.push(
+        <pre dangerouslySetInnerHTML={{__html: marked(this.joinBuffers(this.state.buffers))}} />
       );
     }
 
