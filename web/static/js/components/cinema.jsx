@@ -67,10 +67,14 @@ export class Cinema extends React.Component {
   }
 
   playVideo(pool) {
-    let showVideo = !this.state.showVideo;
-
     this.setState({
-      showVideo: showVideo
+      showVideo: !this.state.showVideo,
+    });
+  }
+
+  viewRaw(pool) {
+    this.setState({
+      viewRaw: !this.state.viewRaw,
     });
   }
 
@@ -95,30 +99,40 @@ export class Cinema extends React.Component {
     var cinema = [];
 
     cinema.push(<a key="download" className="btn btn-default btn-lg" href={this.state.url} download={this.props.pool.description}>Download</a>);
+    cinema.push(
+      <button key="view-raw" type="button" className="btn btn-default btn-lg" onClick={()=>this.viewRaw(this.props.pool)}>View Raw</button>
+    );
 
-    if (this.props.pool.description.match(/\.mp4$/i)) {
+    if (this.state.viewRaw) {
       cinema.push(
-        <button key="play" type="button" className="btn btn-default btn-lg" onClick={()=>this.playVideo(this.props.pool)}>Play Video</button>
+        <pre key="raw">{this.joinBuffers(this.state.buffers)}</pre>
       );
-
-      if (this.state.showVideo) {
+    } else {
+      if (this.props.pool.description.match(/\.mp4$/i)) {
         cinema.push(
-          <video key="video" src={this.state.url} autoPlay="true" ref="video" controls="true"></video>
+          <button key="play" type="button" className="btn btn-default btn-lg" onClick={()=>this.playVideo(this.props.pool)}>Play Video</button>
+        );
+
+        if (this.state.showVideo) {
+          cinema.push(
+            <video key="video" src={this.state.url} autoPlay="true" ref="video" controls="true"></video>
+          );
+        }
+      }
+
+      if (this.props.pool.description.match(/\.(png|gif|jpg)$/i)) {
+        cinema.push(
+          <img key="image" src={this.state.url} />
+        );
+      }
+
+      if (this.props.pool.description.match(/\.(md)$/i)) {
+        cinema.push(
+          <pre key="markdown" dangerouslySetInnerHTML={{__html: marked(this.joinBuffers(this.state.buffers))}} />
         );
       }
     }
 
-    if (this.props.pool.description.match(/\.(png|gif|jpg)$/i)) {
-      cinema.push(
-        <img key="image" src={this.state.url} />
-      );
-    }
-
-    if (this.props.pool.description.match(/\.(md)$/i)) {
-      cinema.push(
-        <pre dangerouslySetInnerHTML={{__html: marked(this.joinBuffers(this.state.buffers))}} />
-      );
-    }
 
     return <div className="cinema">{cinema}</div>;
   }
