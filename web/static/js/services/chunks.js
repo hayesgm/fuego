@@ -20,6 +20,10 @@ let downloadPromises = {};
 
 let badPeers = [];
 
+let downloadTimeout = 10000; // 10 seconds
+
+let waiting = {};
+
 function fetch(pool_id, chunk, remotePeerId) {
   trace("fetching chunk", pool_id, chunk, "from", remotePeerId);
 
@@ -49,9 +53,13 @@ function fetch(pool_id, chunk, remotePeerId) {
   return promise;
 }
 
+function unactivate(pool_id, chunk) {
+  activeDownloads = activeDownloads.filter(a => { return a[0] !== pool_id || a[1] !== chunk; });
+}
+
 function releaseDownload(pool_id, chunk) {
   // release this chunk
-  activeDownloads = activeDownloads.filter(a => { return a[0] !== pool_id || a[1] !== chunk; });
+  unactivate(pool_id, chunk);
 
   debug("freed chunk..", pool_id, chunk, activeDownloads);
 
@@ -87,6 +95,7 @@ function download(pool_id, chunk, remotePeerId) {
       .receive("ok", (msg) => {
         if (msg.peer_id) {
           trace("trying again with peer", msg.peer_id);
+          unactivate(pool_id, chunk);
           download(pool_id, chunk, msg.peer_id);
         } else {
           trace("failed to find peer for chunk", pool_id, chunk);
@@ -102,6 +111,15 @@ function download(pool_id, chunk, remotePeerId) {
   } else {
     // We will re-use an existing connection, if given
     let remotePeer = Peer.getRemote(remotePeerId, reconnect);
+
+    // timeout after a certain amount of time
+    setTimeout(() => {
+      if (waiting[pool_id + chunk]) {
+        reconnect("timeout");
+      }
+    }, downloadTimeout);
+
+    waiting[pool_id + chunk] = true;
 
     if (remotePeer) {
       debug("using existing connection", remotePeerId);
@@ -120,22 +138,15 @@ function download(pool_id, chunk, remotePeerId) {
       let conn = Peer.connectRemote(remotePeerId, reconnect);
 
       conn.on('close', () => {
-        trace('webrtc closed');
+        reconnect("closed");
       });
 
       conn.on('disconnected', () => {
-        trace('webrtc disconnected');
+        reconnect("disconnected");
       });
 
       conn.on('error', (err) => {
-        // TODO
-        // We're going to need to find other peers when we have a WebRTC error
-        // There's going to obviously be a ton of heuristics around "good peers"
-        // "blacklisted peers", etc. The server may want information on good/bad
-        // peers so it can take out dead nodes from the system. (when error rate > THRESHOLD)
-        trace('webrtc error', err);
-        releaseDownload(pool_id, chunk);
-        downloadPromises[pool_id][chunk].reject();
+        reconnect(err);
       });
 
       conn.on('data', (message) => {
@@ -143,26 +154,40 @@ function download(pool_id, chunk, remotePeerId) {
 
         debug("rec'd", pool_id, chunk, "from", remotePeerId);
 
-        if (!data) {
-          reconnect("chunk sent empty cell"); // failed to get this chunk from peer
+        // track
+        let wasWaitingOnChunk = delete [pool_id+chunk];
+
+        if (!wasWaitingOnChunk) {
+          debug("ignoring as we already timed out");
         } else {
-          // TODO Verify SHA-256 sum of chunk
+          if (!data) {
+            reconnect("chunk sent empty cell"); // failed to get this chunk from peer
+          } else {
+            let wordArray = CryptoJS.lib.WordArray.create(data);
+            let sha = CryptoJS.SHA256(wordArray).toString();
 
-          // Store data in local object
-          BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
-            debug("stored blob", blob.blob_id);
+            if (sha != chunk) {
+              debug("sha", sha, "chunk", chunk);
 
-            ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+              reconnect("chunk failed sha check");
+            } else {
+              // Store data in local object
+              BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
+                debug("stored blob", blob.blob_id);
 
-              debug("stored chunk", chunkObj);
+                ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
 
-              releaseDownload(pool_id, chunk);
-              downloadPromises[pool_id][chunk].resolve(chunk);
-            });
-          });
+                  debug("stored chunk", chunkObj);
+
+                  releaseDownload(pool_id, chunk);
+                  downloadPromises[pool_id][chunk].resolve(chunk);
+                });
+              });
+            }
+          }
         }
       });
-
+  
       // When we connect, let's ask for a chunk immediately
       conn.on('open', () => {
         conn.send([pool_id,chunk]);

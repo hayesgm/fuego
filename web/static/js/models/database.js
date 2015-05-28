@@ -165,7 +165,7 @@ function storeChunk(pool_id, chunk, blob_id) {
   return serverPromise.then((server) => {
     return server.chunks.query('chunk').only(chunk).filter('pool_id', pool_id).execute().then(chunks => {
       if (chunks.length > 0) {
-        return chunks;
+        return chunks[0];
       } else {
         return server.chunks.add({
           chunk: chunk,

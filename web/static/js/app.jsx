@@ -78,6 +78,7 @@ class App extends React.Component {
 
   onChunkChange(chunk) {
     // TODO: This should be atomic?
+    debug("adding chunk", chunk.pool_id, chunk, "to", this.state.chunks);
     let chunks = this.state.chunks;
     chunks[chunk.pool_id].push(chunk);
     this.setState({

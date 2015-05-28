@@ -40,7 +40,7 @@ export class NetworkStats extends React.Component {
     let pool = this.props.pool;
 
     let downloadRemotes = getActiveDownloads().filter(a => { return a[0] == pool.pool_id; });
-    let downloadRemoteConnections = downloadRemotes.map(r => { return peer.connections[r[2]][0].pc });
+    let downloadRemoteConnections = downloadRemotes.filter(r => peer.connections[r[2]]).map(r => { return peer.connections[r[2]][0].pc });
 
     let uploadRemoteConnections = getActiveUploads().filter(a => { return a[0] == pool.pool_id; }).map(a => { return a[2].pc; });
 
