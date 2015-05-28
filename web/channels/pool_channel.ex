@@ -53,6 +53,12 @@ defmodule Fuego.PoolChannel do
     {:noreply, socket}
   end
 
+  def handle_in("drop_chunk", %{"pool_id" => pool_id, "chunk" => chunk}, socket) do
+    Pool.drop_chunk_from_peer(pool_id, chunk, socket.assigns[:peer_id])
+
+    {:noreply, socket}
+  end
+
   def terminate(_msg, socket) do
     Mix.shell.info "#{socket.assigns[:peer_id]}: Dropping peer..."
 

@@ -34,7 +34,11 @@ if (window.Peer) {
 
       trace("Sending peer chunk", pool_id, chunk);
       BlobStore.getBlob(chunk).then(blob => {
-        conn.send([pool_id, chunk, blob.data]);
+        if (blob) {
+          conn.send([pool_id, chunk, blob.data]);
+        } else {
+          conn.send([pool_id, chunk, null]); // say we don't have it
+        }
       });
     });
   });
@@ -61,6 +65,11 @@ if (window.Peer) {
 function seed(chan, pool_id, chunk) {
   // debug("seeding", pool_id, chunk);
   chan.push("claim_chunk", {pool_id: pool_id, chunk: chunk});
+};
+
+function release(chan, pool_id, chunk) {
+  // debug("seeding", pool_id, chunk);
+  chan.push("release_chunk", {pool_id: pool_id, chunk: chunk});
 };
 
 function connectRemote(remotePeerId, onError) {

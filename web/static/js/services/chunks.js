@@ -98,7 +98,7 @@ function download(pool_id, chunk, remotePeerId) {
   };
 
   if (remotePeerId == null) {
-    reconnect(); // we didn't have a peer, let's try again
+    reconnect("no peer found"); // we didn't have a peer, let's try again
   } else {
     // We will re-use an existing connection, if given
     let remotePeer = Peer.getRemote(remotePeerId, reconnect);
@@ -143,20 +143,24 @@ function download(pool_id, chunk, remotePeerId) {
 
         debug("rec'd", pool_id, chunk, "from", remotePeerId);
 
-        // TODO Verify SHA-256 sum of chunk
+        if (!data) {
+          reconnect("chunk sent empty cell"); // failed to get this chunk from peer
+        } else {
+          // TODO Verify SHA-256 sum of chunk
 
-        // Store data in local object
-        BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
-          debug("stored blob", blob.blob_id);
+          // Store data in local object
+          BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
+            debug("stored blob", blob.blob_id);
 
-          ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+            ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
 
-            debug("stored chunk", chunkObj);
+              debug("stored chunk", chunkObj);
 
-            releaseDownload(pool_id, chunk);
-            downloadPromises[pool_id][chunk].resolve(chunk);
+              releaseDownload(pool_id, chunk);
+              downloadPromises[pool_id][chunk].resolve(chunk);
+            });
           });
-        });
+        }
       });
 
       // When we connect, let's ask for a chunk immediately

@@ -12,10 +12,13 @@ export class PoolView extends React.Component {
     this.state = {
       pool: null,
       poolChunks: [],
-      poolsLoaded: false
+      percentComplete: null,
     };
 
-
+    // We may want to immediately set the state, which we have to do after this returns
+    setTimeout(() => {
+      this.onPoolIdChange(props);
+    }, 0);
   };
 
   onPoolIdChange(props) {
@@ -24,6 +27,7 @@ export class PoolView extends React.Component {
     })[0];
 
     if (pool) {
+      debug("pool view // setting pool", pool.pool_id);
       let poolChunks = props.chunks[pool.pool_id] || [];
 
       this.setState({
@@ -33,12 +37,16 @@ export class PoolView extends React.Component {
       });
     } else {
       if (props.poolsLoaded) {
+        debug("pool view // didn't find pool");
+
         props.fetchPool(props.params.pool_id);
       }
     }
   }
 
   componentWillReceiveProps(props) {
+    debug("getting da props");
+
     this.onPoolIdChange(props)
   }
 
@@ -61,6 +69,8 @@ export class PoolView extends React.Component {
 
       return (
         <div className="poolView">
+          <a className="btn btn-default btn-lg" onClick={()=>this.props.deletePool(this.state.pool)}>Remove</a>
+
           <div className="header">
             <h1>{this.state.pool.description}</h1>
             <h4>{downloadStatus}</h4>

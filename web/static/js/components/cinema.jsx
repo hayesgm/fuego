@@ -9,6 +9,11 @@ export class Cinema extends React.Component {
     super(props);
     
     this.state = {url: null};
+
+    // We may want to immediately set the state, which we have to do after this returns
+    setTimeout(() => {
+      this.componentWillReceiveProps(props);
+    }, 0);
   }
 
   componentWillReceiveProps(props) {
@@ -60,7 +65,7 @@ export class Cinema extends React.Component {
     var cinema = [];
 
     cinema.push(<a key="download" className="btn btn-default btn-lg" href={this.state.url} download={this.props.pool.description}>Download</a>);
-    
+
     if (this.props.pool.description.match(/\.mp4$/i)) {
       cinema.push(
         <button key="play" type="button" className="btn btn-default btn-lg" onClick={()=>this.playVideo(this.props.pool)}>Play Video</button>

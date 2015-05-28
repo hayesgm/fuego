@@ -63,6 +63,39 @@ function createPool(pool_id, chunks, description, chunk_size, total_size) {
   });
 }
 
+function destroyPool(pool_id) {
+  return serverPromise.then((server) => {
+    
+    return getChunks(pool_id).then((chunks) => {
+      let chunkRemovePromises = chunks.map((chunk) => {
+
+        // remove the blobs
+        let blobRemovePromise = getBlob(chunk.chunk).then((blob) => {
+          if (blob) {
+            console.log("removing blob", blob.blob_id);
+            return server.blobs.remove(blob.blob_id);
+          } else {
+            return true;
+          }
+        });
+
+        // then the chunk itself
+        console.log("removing chunk", chunk.chunk);
+        let chunkRemovePromise = server.chunks.remove(chunk.chunk);
+
+        return Promise.all([blobRemovePromise, chunkRemovePromise]);
+      });
+
+      return Promise.all(chunkRemovePromises).then(() => {
+
+        // after we've removed the chunks, let's actually delete the pool itself
+        console.log("removing pool", pool_id);
+        return server.pools.remove(pool_id);
+      });
+    });
+  });
+}
+
 function getBlob(chunk) {
   return serverPromise.then((server) => {
     return server.blobs.query('chunk').only(chunk).execute().then((blob) => {
@@ -151,6 +184,7 @@ let Database = {
   getPools: getPools,
   findOrCreatePool: findOrCreatePool,
   createPool: createPool,
+  destroyPool: destroyPool,
   getChunks: getChunks,
   getAllChunks: getAllChunks,
   getBlob: getBlob,

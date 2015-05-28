@@ -1,5 +1,5 @@
 import Reflux from '../reflux'
-import {createPool} from '../actions/actions'
+import {createPool, removePool} from '../actions/actions'
 import db from "../models/database"
 
 let PoolStore = Reflux.createStore({
@@ -24,6 +24,12 @@ let PoolStore = Reflux.createStore({
 
   getPool: function(pool_id) {
     return db.getPool(pool_id);
+  },
+
+  destroyPool: function(pool_id) {
+    return db.destroyPool(pool_id).then(() => {
+      removePool.trigger(pool_id);
+    });
   },
 
   onCreatePool: function(poolParams) {

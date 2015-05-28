@@ -13,6 +13,8 @@ var BlobStore = require('./stores/blob_store');
 var ChunkStore = require('./stores/chunk_store');
 var PoolStore = require('./stores/pool_store');
 
+var Actions = require('./actions/actions');
+
 import Pool from './services/pool'
 import {socket, peer_id} from './services/init'; // initialize
 
@@ -27,16 +29,18 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    this.unsubscribePool = PoolStore.listen(this.onPoolChange.bind(this));
+    this.unsubscribeOnPoolChange = PoolStore.listen(this.onPoolChange.bind(this));
     this.unsubscribeChunk = ChunkStore.listen(this.onChunkChange.bind(this));
+    this.unsubscribeOnPoolRemove = Actions.removePool.listen(this.onPoolRemove.bind(this));
 
     // Initial load
     this.onPoolChange();
   }
 
   componentWillUnmount() {
-    this.unsubscribePool();
+    this.unsubscribeOnPoolChange();
     this.unsubscribeChunk();
+    this.unsubscribeOnPoolRemove();
   }
 
   onPoolChange() {
@@ -60,6 +64,18 @@ class App extends React.Component {
     });
   }
 
+  onPoolRemove(pool_id) {
+    debug("removing pool from view", pool_id);
+
+    let remainingPools = this.state.pools.filter(pool => pool.pool_id !== pool_id);
+    delete this.state.chunks[pool_id]; // remove the pool from chunks
+
+    this.setState({
+      pools: remainingPools,
+      chunks: this.state.chunks,
+    });
+  }
+
   onChunkChange(chunk) {
     // TODO: This should be atomic?
     let chunks = this.state.chunks;
@@ -71,6 +87,14 @@ class App extends React.Component {
 
   fetchPool(pool_id) {
     Pool.fetch(socket, peer_id, pool_id);
+  }
+
+  deletePool(pool) {
+    // first, redirect away
+    this.context.router.transitionTo('dashboard');
+
+    // then destroy the pool
+    Pool.destroy(socket, peer_id, pool);
   }
 
   uploadFile(file) {
@@ -86,7 +110,7 @@ class App extends React.Component {
       <div className="full row">
         <PoolBar uploadFile={this.uploadFile.bind(this)} pools={this.state.pools} chunks={this.state.chunks}/>
         <div className="col-xs-7 col-sm-8" id="main">
-          <RouteHandler fetchPool={this.fetchPool} pools={this.state.pools} chunks={this.state.chunks} poolsLoaded={this.state.poolsLoaded} />
+          <RouteHandler fetchPool={this.fetchPool} deletePool={this.deletePool.bind(this)} pools={this.state.pools} chunks={this.state.chunks} poolsLoaded={this.state.poolsLoaded} />
         </div>
       </div>
     )
@@ -100,7 +124,7 @@ App.contextTypes = {
 // declare our routes and their hierarchy
 var routes = (
   <Route handler={App} path="">
-    <Route path="" handler={Dashboard}/>
+    <Route path="" handler={Dashboard} name="dashboard"/>
     <Route path=":pool_id" name="pool" handler={PoolView}/>
   </Route>
 );

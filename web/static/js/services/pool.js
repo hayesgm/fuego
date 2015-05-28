@@ -46,10 +46,26 @@ function fetch(socket, peer_id, pool_id) {
         debug("chunk peer", chunkPeer);
 
         let [chunk,remotePeerId] = chunkPeer;
+        let retryInterval = 3000;
 
-        return Chunks.fetch(pool_id, chunk, remotePeerId).then((chunk) => {
-          Peer.seed(chan, pool_id, chunk);
-          return chunk;
+        let fetchChunk = function() {
+          return Chunks.fetch(pool_id, chunk, remotePeerId).then((chunk) => {
+            Peer.seed(chan, pool_id, chunk);
+            return chunk;
+          });
+        };
+
+        return new Promise((resolve, reject) => {
+          let f = function() {
+            fetchChunk().then((chunk) => {
+              return resolve(chunk);
+            }).catch(() => {
+              debug("failed to fetch chunk, retrying in " + retryInterval / 1000.0 + " seconds...");
+              setTimeout(f, retryInterval);
+            });
+          };
+
+          f();
         });
       });
 
@@ -58,6 +74,28 @@ function fetch(socket, peer_id, pool_id) {
       });
     });
   });
+}
+
+function destroy(socket, peer_id, pool) {
+  trace("destroying pool", pool.pool_id);
+
+  let promise = new Promise((resolve, reject) => {
+    Chan.find(socket, peer_id, pool.pool_id).then( (chan, _response) => {
+      // Let's seed each of the chunks
+      pool.chunks.forEach((chunk) => {
+        debug("releasing chunk", chunk)
+        Peer.release(chan, pool.pool_id, chunk);
+      });
+ 
+      resolve(); // existed, removed ourselves
+    }).catch(() => {
+      resolve(false); // doesn't exist
+    });
+  });
+
+  return promise.then((_removed) => {
+    return PoolStore.destroyPool(pool.pool_id);
+  })
 }
 
 // register pool is when we have a complete pool, either from localdb or a file
@@ -165,6 +203,7 @@ let Pool = {
   refresh: refresh,
   fetch: fetch,
   register: register,
+  destroy: destroy,
   createFromFile: createFromFile,
   getPercentComplete: getPercentComplete,
   getPoolBuffers: getPoolBuffers,

@@ -8,7 +8,7 @@ import {peer} from '../services/peer'
 export class NetworkStats extends React.Component {
   constructor(props) {
     super(props);
-    this.interval = 500;
+    this.interval = 2000;
 
     setInterval(() => {
       this.getNetworkStats();

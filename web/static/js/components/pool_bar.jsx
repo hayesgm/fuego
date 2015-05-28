@@ -29,6 +29,13 @@ class PoolBarList extends React.Component {
 
     return (
       <ul id="pools">
+        <li key="dashboard">
+          <Link to="dashboard">
+            <div className="name">
+              <div className="desc">Dashboard</div>
+            </div>
+          </Link>
+        </li>
         {poolList}
       </ul>
     );
