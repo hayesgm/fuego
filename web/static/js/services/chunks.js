@@ -22,7 +22,8 @@ let downloadPromises = {};
 
 let badPeers = [];
 
-let downloadTimeout = 30000; // 30 seconds
+const DOWNLOAD_TIMEOUT = 30000; // 30 seconds
+const BAD_PEER_TIMEOUT = 10000; // 10 seconds
 
 let waiting = {};
 
@@ -97,9 +98,15 @@ function download(pool_id, chunk, remotePeerId) {
     if (force || ( waiting[pool_id] && waiting[pool_id][chunk]) ) {
       trace("error downloading", chunk, "from peer", remotePeerId, "going to try new remote peer", err);
 
-      if (badPeers.indexOf(remotePeerId) === -1) {
+      if (!force && remotePeerId && badPeers.indexOf(remotePeerId) === -1) {
         badPeers.push(remotePeerId);
-        debug("bad peers", badPeers);
+        debug("putting bad peer in jail", remotePeerId, "for " + BAD_PEER_TIMEOUT/1000.0 + "seconds...", badPeers);
+
+        // Remove bad peers after BAD_PEER_TIMEOUT
+        setTimeout(() => {
+          debug("oly oly oxen free", remotePeerId);
+          badPeers = badPeers.filter(x => { return x !== remotePeerId; });
+        }, BAD_PEER_TIMEOUT);
       }
 
       trace("finding new peer for", pool_id, chunk);
@@ -134,7 +141,7 @@ function download(pool_id, chunk, remotePeerId) {
     // timeout after a certain amount of time
     setTimeout(() => {
       reconnect("timeout");
-    }, downloadTimeout);
+    }, DOWNLOAD_TIMEOUT);
 
     waiting[pool_id] = waiting[pool_id] || {}
     waiting[pool_id][chunk] = true;
@@ -154,6 +161,10 @@ function download(pool_id, chunk, remotePeerId) {
     } else {
       debug("connecting to peer", remotePeerId);
       let conn = Peer.connectRemote(remotePeerId, reconnect);
+
+      if (!conn) {
+        reconnect("peer connection failure");
+      }
 
       conn.on('close', () => {
         reconnect("closed");

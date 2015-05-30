@@ -100,7 +100,7 @@ export class NetworkStats extends React.Component {
   }
 
   byteRate(r) {
-    if (!r) {
+    if (!r && r < 0) {
       return "0 KB/s";
     } else {
       return Math.round(r / 1024.4) + "KB/s";

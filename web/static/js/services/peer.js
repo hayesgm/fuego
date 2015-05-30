@@ -14,6 +14,8 @@ let errors = {};
 let peer = null;
 let activeUploads = [];
 
+const RECONNECTION_TIMEOUT = 10000;
+
 if (window.Peer) {
   peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: 3}); // optional for now
 
@@ -47,6 +49,19 @@ if (window.Peer) {
     });
   });
 
+  peer.on('close', () => {
+    trace("peer closed");
+  });
+
+  peer.on('disconnected', () => {
+    trace("peer lost connection, reconnecting in " + Math.round(RECONNECTION_TIMEOUT/1000.0) + " seconds...");
+
+    setTimeout(() => {
+      debug("reconnecting...");
+      peer.reconnect();
+    }, RECONNECTION_TIMEOUT);
+  });
+
   peer.on('error', (err) => {
     let match = err.message.match(/peer\s([^\s]+)/i);
 
@@ -57,10 +72,13 @@ if (window.Peer) {
       debug("peer unavailable", remotePeerId, err);
 
       errors[remotePeerId] = err;
+
       // Call the error function(s) for this peer
       errorHandlers[remotePeerId].forEach((errorHandler) => {
         errorHandler.call(err);
       });
+    } else {
+      trace("peer error", err);
     }
   });
 
@@ -80,7 +98,9 @@ function connectRemote(remotePeerId, onError) {
   errorHandlers[remotePeerId] = [onError]; // set error handlers
 
   let dataConnection = peer.connect(remotePeerId);
-  dataConnection.remotePeerId = remotePeerId; // for book-keeping
+  if (dataConnection) {
+    dataConnection.remotePeerId = remotePeerId; // for book-keeping
+  }
 
   return peers[remotePeerId] = dataConnection;
 };

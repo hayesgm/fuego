@@ -10,6 +10,8 @@ import PoolStore from '../stores/pool_store';
 import ChunkStore from '../stores/chunk_store';
 import BlobStore from '../stores/blob_store';
 
+const RETRY_INTERVAL = 20000;
+
 function refresh(socket, peer_id) {
   
   // let's look at each pool we know of and either resume or seed
@@ -45,7 +47,6 @@ function fetch(socket, peer_id, pool_id) {
         debug("chunk peer", chunkPeer);
 
         let [chunk,remotePeerId] = chunkPeer;
-        let retryInterval = 10000;
 
         let fetchChunk = function() {
           return Chunks.fetch(pool_id, chunk, remotePeerId).then((chunk) => {
@@ -61,8 +62,8 @@ function fetch(socket, peer_id, pool_id) {
             }).catch(() => {
               PoolStore.getPool(pool_id).then((p) => {
                 if (p) {
-                  debug("failed to fetch chunk, retrying in " + retryInterval / 1000.0 + " seconds...");
-                  setTimeout(f, retryInterval);
+                  debug("failed to fetch chunk, retrying in " + RETRY_INTERVAL / 1000.0 + " seconds...");
+                  setTimeout(f, RETRY_INTERVAL);
                 } else {
                   debug("failed to fetch chunk, but pool has been destroyed");
                 }
