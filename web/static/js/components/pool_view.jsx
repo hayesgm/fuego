@@ -4,6 +4,9 @@ import PoolStore from '../stores/pool_store'
 import {Cinema} from './cinema'
 import ChunkStore from '../stores/chunk_store'
 import {NetworkStats} from './network_stats'
+import {PoolViewInfo} from './pool_view_info'
+import {PoolViewHeader} from './pool_view_header'
+import Pool from '../services/pool'
 
 export class PoolView extends React.Component {
   constructor(props) {
@@ -13,6 +16,8 @@ export class PoolView extends React.Component {
       pool: null,
       poolChunks: [],
       percentComplete: null,
+      buffers: null,
+      url: null,
     };
 
     // We may want to immediately set the state, which we have to do after this returns
@@ -20,6 +25,16 @@ export class PoolView extends React.Component {
       this.onPoolIdChange(props);
     }, 0);
   };
+
+  componentWillReceiveProps(props) {
+    debug("getting da props");
+
+    this.onPoolIdChange(props)
+  }
+
+  componentWillUnmount() {
+    this.clearURL();
+  }
 
   onPoolIdChange(props) {
     let pool = props.pools.filter((pool) => {
@@ -34,6 +49,7 @@ export class PoolView extends React.Component {
         pool: pool,
         poolChunks: poolChunks,
         percentComplete: Math.round(poolChunks.length / ( pool.chunks.length / 100.0 ) ),
+        finished: poolChunks.length == pool.chunks.length,
       });
     } else {
       if (props.poolsLoaded) {
@@ -42,47 +58,75 @@ export class PoolView extends React.Component {
         props.fetchPool(props.params.pool_id);
       }
     }
+
+    if (pool) {
+      if (!this.state.pool || ( this.state.pool.pool_id != props.params.pool_id) ) {
+        // We've changed pools we're looking at, always re-fetch
+        this.clearURL();
+
+        this.fetchData(pool, props.chunks[pool.pool_id]);
+      } else {
+
+        // We're looking at the same pool, see if we should fetch if we have a complete download
+        if (this.state.url == null) { // only bother if we don't have a url built
+          this.fetchData(pool, props.chunks[pool.pool_id]); // download that m-f
+        }
+      }
+    }
   }
 
-  componentWillReceiveProps(props) {
-    debug("getting da props");
-
-    this.onPoolIdChange(props)
+  clearURL() {
+    if (this.state.url) {
+      // clear the url
+      URL.revokeObjectURL(this.state.url);
+      this.setState({
+        buffers: null,
+        url: null,
+      });
+    }
   }
 
-  render() {    
+  fetchData(pool, chunks) {
+    debug("re-fetching pool data for pool view");
+
+    if (chunks && pool.chunks.length == chunks.length) { // only build if we have a complete download
+      Pool.getPoolBuffers(pool).then((arrayBuffers) => {
+        let blob = new Blob(arrayBuffers);
+        let url = URL.createObjectURL(blob);
+
+        this.setState({
+          buffers: arrayBuffers,
+          url: url,
+        });
+      });
+    }
+  }
+
+  viewRaw() {
+    debug("view raw", this.state);
+
+    this.setState({
+      isViewRaw: !this.state.isViewRaw,
+    });
+  }
+
+  render() {
     debug("pool", this.state.pool);
 
     if (!this.state.pool) {
-      return <div>Loading...</div>;
+      return <div></div>;
     } else {
 
-      if (this.state.percentComplete == 100) {
-        var downloadStatus = (
-          <span>Download Complete, Seeding</span>
-        );
-      } else {
-        var downloadStatus = (
-          <span>Downloading...</span>
-        );
-      }
-
       return (
-        <div className="poolView">
-          <a className="btn btn-default btn-lg" onClick={()=>this.props.deletePool(this.state.pool)}>Remove</a>
+        <div className="pool-view">
 
-          <div className="header">
-            <h1>{this.state.pool.description}</h1>
-            <h4>{downloadStatus}</h4>
-          </div>
+          <PoolViewHeader pool={this.state.pool} chunks={this.state.poolChunks} url={this.state.url} buffers={this.state.buffers} deletePool={this.props.deletePool} viewRaw={this.viewRaw.bind(this)} isViewRaw={this.state.isViewRaw} finished={this.state.finished} />
+
+          <PoolViewInfo pool={this.state.pool} percentComplete={this.state.percentComplete} />
 
           <NetworkStats pool={this.state.pool} poolChunks={this.state.poolChunks} percentComplete={this.state.percentComplete}/>
 
-          <div className="row" id="actionArea">
-            <div className="col-lg-12">
-              <Cinema pool={this.state.pool} chunks={this.state.poolChunks} />
-            </div>
-          </div>
+          <Cinema pool={this.state.pool} chunks={this.state.poolChunks} url={this.state.url} buffers={this.state.buffers} deletePool={this.props.deletePool} isViewRaw={this.state.isViewRaw} finished={this.state.finished}/>
         </div>
       );
     }

@@ -11,24 +11,23 @@ import ChunkStore from '../stores/chunk_store';
 import BlobStore from '../stores/blob_store';
 
 function refresh(socket, peer_id) {
-  // let's look at each pool we know of
-
+  
+  // let's look at each pool we know of and either resume or seed
   return PoolStore.getPools().then((pools) => {
     return Promise.all(pools.map((pool) => {
       // show as a potential downlaod
-      return getPercentComplete(pool).then((percent) => {
+      return isComplete(pool).then((complete) => {
 
-        debug("got pool", pool.description, percent, "% complete")
+        debug("got pool", pool.description, complete ? "complete" : "incomplete");
 
-        // If we haven't finished, try to complete download
-        if (percent < 99.999) {
-          return fetch(socket, peer_id, pool.pool_id).then(([pool,_buffers]) => {
-            return pool;
-          });
-        } else {
+        if (complete) {
           // If we have, then let's seed it ourselves
           return register(socket, peer_id, pool);
+        } else {
+          // If we haven't finished, try to complete download
+          return fetch(socket, peer_id, pool.pool_id);
         }
+
       });
     }));
   });
@@ -182,11 +181,9 @@ function createFromFile(file) {
   });
 }
 
-function getPercentComplete(pool) {
-  let totalChunks = pool.chunks.length;
-
+function isComplete(pool) {
   return ChunkStore.getChunks(pool.pool_id).then((chunks) => {
-    return chunks.length / ( totalChunks / 100.0 );
+    return chunks.length == pool.chunks.length;
   });
 }
 
@@ -211,7 +208,6 @@ let Pool = {
   register: register,
   destroy: destroy,
   createFromFile: createFromFile,
-  getPercentComplete: getPercentComplete,
   getPoolBuffers: getPoolBuffers,
 };
 

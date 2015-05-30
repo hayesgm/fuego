@@ -117,7 +117,7 @@ export class NetworkStats extends React.Component {
 
   render() {
     return (
-      <div id="network-stats info">
+      <div className="network-stats info">
         <dl className="dl-horizontal">
           <dt>Network</dt>
           <dd>{this.plural(this.state.peers, "Active Peer", "Active Peers")}</dd>

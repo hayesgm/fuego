@@ -1,16 +1,18 @@
 "use strict";
 
-import {trace,debug} from "./logging"
-import Peer from "./peer"
-import {getOpenChannel} from "./chan"
+import {trace,debug} from "./logging";
+import Peer from "./peer";
+import {getOpenChannel} from "./chan";
 
-import BlobStore from '../stores/blob_store'
-import ChunkStore from '../stores/chunk_store'
+import BlobStore from '../stores/blob_store';
+import ChunkStore from '../stores/chunk_store';
+
+import Actions from '../actions/actions';
 
 let CHUNK_SIZE = Math.pow(2, 18); // 256KB chunks
 let SIMULTANEOUS_DOWNLOADS = 5;
 
-// Chunks we're waiting to download
+// Chunks we're waiting to download [pool_id, chunk, remotePeerId]
 let chunkQueue = [];
 
 // Chunks we're downloading
@@ -20,9 +22,20 @@ let downloadPromises = {};
 
 let badPeers = [];
 
-let downloadTimeout = 10000; // 10 seconds
+let downloadTimeout = 30000; // 30 seconds
 
 let waiting = {};
+
+// when a pool is deleted, we should remove all chunks we're attempting to download
+function stopPool(pool_id) {
+  // remote queued chunks
+  chunkQueue = chunkQueue.filter(c => { return c[0] !== pool_id; });
+
+  // and stop waiting on any chunks
+  delete waiting[pool_id];
+
+  debug("no longer handling chunks from", pool_id, chunkQueue, waiting);
+}
 
 function fetch(pool_id, chunk, remotePeerId) {
   trace("fetching chunk", pool_id, chunk, "from", remotePeerId);
@@ -80,46 +93,51 @@ function download(pool_id, chunk, remotePeerId) {
   // This is now being downloaded
   activeDownloads.push([pool_id, chunk, remotePeerId]);
 
-  let reconnect = (err) => {
-    trace("error downloading", chunk, "from peer", remotePeerId, "going to try new remote peer", err);
+  let reconnect = (err, force) => {
+    if (force || ( waiting[pool_id] && waiting[pool_id][chunk]) ) {
+      trace("error downloading", chunk, "from peer", remotePeerId, "going to try new remote peer", err);
 
-    if (badPeers.indexOf(remotePeerId) === -1) {
-      badPeers.push(remotePeerId);
-      debug("bad peers", badPeers);
+      if (badPeers.indexOf(remotePeerId) === -1) {
+        badPeers.push(remotePeerId);
+        debug("bad peers", badPeers);
+      }
+
+      trace("finding new peer for", pool_id, chunk);
+      
+      getOpenChannel(pool_id)
+        .push("find_a_peer_for_chunk", {pool_id: pool_id, chunk: chunk, but_please_not: badPeers})
+        .receive("ok", (msg) => {
+          if (msg.peer_id) {
+            trace("trying again with peer", msg.peer_id);
+            unactivate(pool_id, chunk);
+            download(pool_id, chunk, msg.peer_id);
+          } else {
+            trace("failed to find peer for chunk", pool_id, chunk);
+            releaseDownload(pool_id, chunk);
+            downloadPromises[pool_id][chunk].reject(chunk);
+          }
+        })
+        .receive("error", (reasons) => console.log("create failed", reasons) );
+    } else {
+      debug("ignoring retry as we already timed out or pool was removed");
+      releaseDownload(pool_id, chunk);
+      downloadPromises[pool_id][chunk].reject(chunk);
     }
-
-    trace("finding new peer for", pool_id, chunk);
-    
-    getOpenChannel(pool_id)
-      .push("find_a_peer_for_chunk", {pool_id: pool_id, chunk: chunk, but_please_not: badPeers})
-      .receive("ok", (msg) => {
-        if (msg.peer_id) {
-          trace("trying again with peer", msg.peer_id);
-          unactivate(pool_id, chunk);
-          download(pool_id, chunk, msg.peer_id);
-        } else {
-          trace("failed to find peer for chunk", pool_id, chunk);
-          releaseDownload(pool_id, chunk);
-          downloadPromises[pool_id][chunk].reject(chunk);
-        }
-      })
-      .receive("error", (reasons) => console.log("create failed", reasons) );
   };
 
   if (remotePeerId == null) {
-    reconnect("no peer found"); // we didn't have a peer, let's try again
+    reconnect("no peer found", true); // we didn't have a peer, let's try again
   } else {
     // We will re-use an existing connection, if given
     let remotePeer = Peer.getRemote(remotePeerId, reconnect);
 
     // timeout after a certain amount of time
     setTimeout(() => {
-      if (waiting[pool_id + chunk]) {
-        reconnect("timeout");
-      }
+      reconnect("timeout");
     }, downloadTimeout);
 
-    waiting[pool_id + chunk] = true;
+    waiting[pool_id] = waiting[pool_id] || {}
+    waiting[pool_id][chunk] = true;
 
     if (remotePeer) {
       debug("using existing connection", remotePeerId);
@@ -155,10 +173,10 @@ function download(pool_id, chunk, remotePeerId) {
         debug("rec'd", pool_id, chunk, "from", remotePeerId);
 
         // track
-        let wasWaitingOnChunk = delete [pool_id+chunk];
+        let wasWaitingOnChunk = waiting[pool_id] && ( delete waiting[pool_id][chunk] );
 
         if (!wasWaitingOnChunk) {
-          debug("ignoring as we already timed out");
+          debug("ignoring as we already timed out or pool was removed");
         } else {
           if (!data) {
             reconnect("chunk sent empty cell"); // failed to get this chunk from peer
@@ -202,9 +220,15 @@ function getActiveDownloads() {
   return activeDownloads;
 }
 
+function getDownloadQueue() {
+  return chunkQueue;
+}
+
 let Chunks = {
   fetch: fetch,
   getActiveDownloads: getActiveDownloads,
+  getDownloadQueue: getDownloadQueue,
+  stopPool: stopPool,
   CHUNK_SIZE: CHUNK_SIZE
 };
 

@@ -7,13 +7,21 @@ export class ProgressBar extends React.Component {
   };
 
   render() {
-    let widthPercent = Math.round(this.props.chunks.length / ( this.props.pool.chunks.length / 100.0 ) );
+    let percent = Math.round(this.props.chunks.length / ( this.props.pool.chunks.length / 100.0 ) );
 
-    return (
-      <div className="progressBar">
-        <div className="inner" style={ { width: widthPercent + "%" } }>{widthPercent}%</div>
-      </div>
-    );
+    if (percent < 100) {
+      return (
+        <div className="progressBar">
+          <div className="inner" style={ { width: percent + "%" } }>{percent}%&nbsp;</div>
+        </div>
+      );
+    } else {
+      return (
+        <div className="progressBar">
+          <div className="inner" style={ { width: percent + "%" } } />
+        </div>
+      );
+    }
     
   }
 }

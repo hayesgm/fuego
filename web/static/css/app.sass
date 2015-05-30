@@ -72,7 +72,7 @@ body
       display: none
 
 #main
-  padding: 100px
+  padding: 50px
 
   #actionArea
     margin-top: 100px
@@ -112,5 +112,49 @@ body
     height: 100%
     color: #eee
     font-size: 0.4em
-    text-align: center
+    text-align: right
     line-height: 7px
+    overflow: hidden
+
+.pool-view
+  display: flex
+  flex: 1
+  flex-direction: column
+
+  // .pool-info
+        
+
+  // .network-stats
+    
+
+  .pool-view-header
+    order: -1
+    flex: 1
+    
+
+    .btn
+      float: right
+      margin-right: 7px
+
+  .cinema
+    order: 1
+    flex: 1
+    margin-top: 10px
+    width: 100%
+    min-height: 100px
+    display: flex
+    align-items: center
+    flex-direction: row
+
+    .loading
+      color: #ccc
+      font-size: 1.2em
+      margin: auto
+
+    .play, .download
+      margin: auto
+
+    video
+      width: 100%
+
+

@@ -3,6 +3,7 @@ import Peer from "./peer"
 import Pool from "./pool"
 import {trace,debug} from "./logging";
 import db from "../models/database";
+import Chunks from './chunks'
 
 let socket = new Socket("/pm");
 
@@ -23,7 +24,9 @@ window.fuego = function() {
       pools: db.getServer().then((server) => { return server.pools.query().all().execute().then(x => {trace("pools",x)}) }),
       chunks: db.getServer().then((server) => { return server.chunks.query().all().execute().then(x => {trace("chunks",x)}) }),
       blobs: db.getServer().then((server) => { return server.blobs.query().all().execute().then(x => {trace("blobs",x)}) })
-    }
+    },
+    downloads: Chunks.getActiveDownloads(),
+    queue: Chunks.getDownloadQueue(),
   };
 };
 

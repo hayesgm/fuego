@@ -1,6 +1,7 @@
 import Reflux from '../reflux'
 import {createPool, removePool} from '../actions/actions'
 import db from "../models/database"
+import Chunks from '../services/chunks'
 
 let PoolStore = Reflux.createStore({
 
@@ -27,6 +28,8 @@ let PoolStore = Reflux.createStore({
   },
 
   destroyPool: function(pool_id) {
+    Chunks.stopPool(pool_id); // first, let's make sure we're no longer downloading from it
+
     return db.destroyPool(pool_id).then(() => {
       removePool.trigger(pool_id);
     });
