@@ -108,9 +108,11 @@ class App extends React.Component {
 
   render () {
     return (
-      <div className="full row">
-        <PoolBar uploadFile={this.uploadFile.bind(this)} pools={this.state.pools} chunks={this.state.chunks}/>
-        <div className="col-xs-7 col-sm-8" id="main">
+      <div className="full-width">
+        <div className="left">
+          <PoolBar uploadFile={this.uploadFile.bind(this)} pools={this.state.pools} chunks={this.state.chunks}/>
+        </div>
+        <div className="right" id="main">
           <RouteHandler fetchPool={this.fetchPool} deletePool={this.deletePool.bind(this)} pools={this.state.pools} chunks={this.state.chunks} poolsLoaded={this.state.poolsLoaded} />
         </div>
       </div>

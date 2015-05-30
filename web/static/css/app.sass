@@ -6,22 +6,32 @@ body
   color: #222
   font-family: sans-serif
 
-.ember-view
-  height: 100%
-
 #top
-  .full
-    height: 100%
+  display: flex
+  min-height: 100vh
+  flex-direction: column
+
+  .full-width
+    display: flex
+    flex: 1
+
+    .left
+      order: -1
+      flex: 0 0 20em
+
+    .right
+      flex: 1
+
 
 #leftNav
   color: #ccc
   padding-top: 80px
   background-color: #333
-  min-height: 100%
+  width: 100%
+  min-width: 200px
 
   ul
     width: 100%
-    padding-left: 0px
 
     li
       width: 100%
