@@ -11,7 +11,7 @@ export class ProgressBar extends React.Component {
 
     return (
       <div className="progressBar">
-        <div className="inner" style={ { width: widthPercent + "%" } }/>
+        <div className="inner" style={ { width: widthPercent + "%" } }>{widthPercent}%</div>
       </div>
     );
     

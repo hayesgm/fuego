@@ -1,6 +1,8 @@
 
 html, body, .container-fluid, #top
   height: 100%
+  margin: 0
+  padding: 0
 
 body
   color: #222
@@ -18,6 +20,7 @@ body
     .left
       order: -1
       flex: 0 0 20em
+      position: relative
 
     .right
       flex: 1
@@ -27,8 +30,9 @@ body
   color: #ccc
   padding-top: 80px
   background-color: #333
+  min-height: 100%
   width: 100%
-  min-width: 200px
+  position: absolute
 
   ul
     width: 100%
@@ -43,6 +47,10 @@ body
         display: inline-block
         padding: 16px 10px 10px 10px
         cursor: pointer
+
+        .desc
+          word-break: break-all
+          word-break: break-word
 
       a
         &.active
@@ -95,10 +103,14 @@ body
       background-color: #c33
 
 .progressBar
-  height: 5px
+  height: 7px
   width: 100%
   margin-top: 10px
 
   .inner
     background-color: #1a1
     height: 100%
+    color: #eee
+    font-size: 0.4em
+    text-align: center
+    line-height: 7px

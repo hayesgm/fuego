@@ -68,7 +68,7 @@ export class PoolBar extends React.Component {
 
   render() {
     return (
-      <div className="col-xs-5 col-sm-4" id="leftNav">
+      <div id="leftNav">
         <div className="row">
           <div className="col-xs-12" id="navigation">
             <PoolBarList pools={this.props.pools} chunks={this.props.chunks}/>
