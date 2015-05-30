@@ -71,9 +71,13 @@ export class Cinema extends React.Component {
         cinema.push(
           <img key="image" src={this.props.url} />
         );
-      } else if (this.props.pool.description.match(/\.(md)$/i)) { // A document
+      } else if (this.props.pool.description.match(/\.(md)$/i)) { // A markdown document
         cinema.push(
           <pre key="markdown" dangerouslySetInnerHTML={{__html: marked(this.joinBuffers(this.props.buffers))}} />
+        );
+      } else if (this.props.pool.description.match(/\.(txt)$/i)) { // A text document
+        cinema.push(
+          <pre key="text">{this.joinBuffers(this.props.buffers)}</pre>
         );
       } else {
         cinema.push(
