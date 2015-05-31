@@ -8,13 +8,10 @@ import {RGChart} from 'components/rg_chart'
 import {peer} from 'services/peer'
 
 export class NetworkStats extends React.Component {
+  
   constructor(props) {
     super(props);
     this.interval = 2000;
-
-    setInterval(() => {
-      this.getNetworkStats();
-    }, this.interval);
 
     this.state = {
       peers: 0,
@@ -24,6 +21,16 @@ export class NetworkStats extends React.Component {
       rateOut: null,
     };
   };
+
+  componentDidMount() {
+    this.timer = setInterval(() => {
+      this.getNetworkStats();
+    }, this.interval);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
 
   componentWillReceiveProps(props) {
     // are we changing pools?
