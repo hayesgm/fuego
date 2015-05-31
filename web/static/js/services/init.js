@@ -1,11 +1,14 @@
 "use strict";
 
+import {env} from 'env';
 import {Socket} from "phoenix";
 import Peer from "services/peer";
 import Pool from "services/pool";
 import {trace,debug} from "services/logging";
 import db from "models/database";
 import Chunks from 'services/chunks';
+
+trace("initializing environment", env.prod ? "prod" : "dev");
 
 let socket = new Socket("/pm");
 

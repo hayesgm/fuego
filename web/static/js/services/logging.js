@@ -1,6 +1,6 @@
 "use strict";
 
-import {mode} from "env";
+import {env} from "env";
 
 function trace() {
   if (arguments.length == 1) {
@@ -10,7 +10,7 @@ function trace() {
   }
 }
 
-if (mode.debug) {
+if (env.debug) {
   var debug = trace;
 } else {
   var debug = function() {};
