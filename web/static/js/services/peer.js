@@ -18,6 +18,7 @@ let activeUploads = [];
 const RECONNECTION_TIMEOUT = 10000;
 
 if (window.Peer) {
+  trace(peer_id, {key: PEER_JS_API_KEY, debug: env.debug ? 3 : 1, secure: env.prod});
   peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: env.debug ? 3 : 1, secure: env.prod}); // optional for now
 
   peer.on('connection', function(conn) {
