@@ -12,7 +12,7 @@
     "react-brunch": "~> 1.0.9"
   },
   "scripts": {
-    "postinstall": "brunch build"
+    "postinstall": "brunch build --production"
   },
   "engines": {
     "node": "0.10.35",
