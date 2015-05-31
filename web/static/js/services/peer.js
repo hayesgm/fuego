@@ -17,9 +17,24 @@ let activeUploads = [];
 
 const RECONNECTION_TIMEOUT = 10000;
 
-if (window.Peer) {
-  trace(peer_id, {key: PEER_JS_API_KEY, debug: env.debug ? 3 : 1, secure: env.prod});
-  peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: env.debug ? 3 : 1, secure: env.prod}); // optional for now
+if (window.Peer) { // optional?
+  
+  if (env.debug) {
+    var config = {
+      key: PEER_JS_API_KEY,
+      debug: 3,
+    };
+  } else {
+    var config = {
+      host: 'fuego-peer-server.herokuapp.com',
+      secure: true,
+      port: 80,
+    };
+  }
+
+  trace("initializing peer", peer_id, config);
+  
+  peer = new Peer(peer_id, config);
 
   peer.on('connection', function(conn) {
     conn.on('close', function() {
