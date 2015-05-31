@@ -1,6 +1,6 @@
 "use strict";
 
-let prod = location.host.match(/^dev|localhost/i);
+let prod = !/^dev|localhost/.test(location.host);
 
 export default {
   env: {
