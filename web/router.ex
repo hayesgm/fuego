@@ -15,10 +15,7 @@ defmodule Fuego.Router do
   scope "/", Fuego do
     pipe_through :browser # Use the default browser stack
 
-    get "/", PageController, :index
-    get "/🔥", PageController, :home
-    get "/fire", PageController, :home
-    get "/f", PageController, :home
+    get "/", PageController, :home
   end
 
   socket "/pm", Fuego do
