@@ -1,1 +1,1 @@
-web: mix phoenix.digest && mix phoenix.server
+web: mix do phoenix.digest, phoenix.server
