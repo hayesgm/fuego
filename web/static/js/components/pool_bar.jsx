@@ -1,9 +1,11 @@
-import React from '../react'
-import {Link} from '../react-router'
-import PoolStore from '../stores/pool_store'
-import {debug} from '../services/logging'
-import Pool from '../services/pool'
-import {ProgressBar} from './progress_bar'
+"use strict";
+
+import React from 'react';
+import {Link} from 'react-router';
+import PoolStore from 'stores/pool_store';
+import {debug} from 'services/logging';
+import Pool from 'services/pool';
+import {ProgressBar} from 'components/progress_bar';
 
 class PoolBarList extends React.Component {
   constructor(props) {

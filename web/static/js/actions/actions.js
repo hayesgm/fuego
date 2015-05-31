@@ -1,4 +1,6 @@
-let Reflux = require('../reflux');
+"use strict";
+
+import Reflux from 'reflux';
 
 let createPool = Reflux.createAction({async_result: true});
 let storeChunk = Reflux.createAction({async_result: true});

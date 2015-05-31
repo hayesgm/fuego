@@ -1,7 +1,9 @@
-import React from '../react'
-import {trace,debug} from "../services/logging"
-import PoolStore from '../stores/pool_store'
-import Pool from '../services/pool'
+"use strict";
+
+import React from 'react';
+import {trace,debug} from "services/logging";
+import PoolStore from 'stores/pool_store';
+import Pool from 'services/pool';
 
 export class PoolViewInfo extends React.Component {
 

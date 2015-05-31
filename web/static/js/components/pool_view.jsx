@@ -1,12 +1,14 @@
-import React from '../react'
-import {trace,debug} from "../services/logging"
-import PoolStore from '../stores/pool_store'
-import {Cinema} from './cinema'
-import ChunkStore from '../stores/chunk_store'
-import {NetworkStats} from './network_stats'
-import {PoolViewInfo} from './pool_view_info'
-import {PoolViewHeader} from './pool_view_header'
-import Pool from '../services/pool'
+"use strict";
+
+import React from 'react';
+import {trace,debug} from "services/logging";
+import PoolStore from 'stores/pool_store';
+import {Cinema} from 'components/cinema';
+import ChunkStore from 'stores/chunk_store';
+import {NetworkStats} from 'components/network_stats';
+import {PoolViewInfo} from 'components/pool_view_info';
+import {PoolViewHeader} from 'components/pool_view_header';
+import Pool from 'services/pool';
 
 export class PoolView extends React.Component {
   constructor(props) {

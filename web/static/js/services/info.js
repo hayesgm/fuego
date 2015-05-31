@@ -1,5 +1,6 @@
+"use strict";
 
-import db from "./services/database"
+import db from "services/database"
 
 window.info = function() {
   return {

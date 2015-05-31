@@ -1,14 +1,14 @@
 "use strict";
 
-import Chan from "./chan";
-import Chunks from "./chunks";
-import db from "../models/database";
-import {trace,debug} from "./logging";
-import Peer from "./peer";
+import Chan from "services/chan";
+import Chunks from "services/chunks";
+import db from "models/database";
+import {trace,debug} from "services/logging";
+import Peer from "services/peer";
 
-import PoolStore from '../stores/pool_store';
-import ChunkStore from '../stores/chunk_store';
-import BlobStore from '../stores/blob_store';
+import PoolStore from 'stores/pool_store';
+import ChunkStore from 'stores/chunk_store';
+import BlobStore from 'stores/blob_store';
 
 const RETRY_INTERVAL = 20000;
 

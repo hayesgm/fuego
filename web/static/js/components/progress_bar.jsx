@@ -1,5 +1,7 @@
-import React from '../react'
-import {trace,debug} from "../services/logging"
+"use strict";
+
+import React from 'react';
+import {trace,debug} from "services/logging";
 
 export class ProgressBar extends React.Component {
   constructor(props) {

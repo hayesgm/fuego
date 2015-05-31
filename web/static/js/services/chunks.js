@@ -1,13 +1,13 @@
 "use strict";
 
-import {trace,debug} from "./logging";
-import Peer from "./peer";
-import {getOpenChannel} from "./chan";
+import {trace,debug} from "services/logging";
+import Peer from "services/peer";
+import {getOpenChannel} from "services/chan";
 
-import BlobStore from '../stores/blob_store';
-import ChunkStore from '../stores/chunk_store';
+import BlobStore from 'stores/blob_store';
+import ChunkStore from 'stores/chunk_store';
 
-import Actions from '../actions/actions';
+import Actions from 'actions/actions';
 
 let CHUNK_SIZE = Math.pow(2, 18); // 256KB chunks
 let SIMULTANEOUS_DOWNLOADS = 5;

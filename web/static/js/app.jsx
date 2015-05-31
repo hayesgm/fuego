@@ -1,22 +1,25 @@
-import {trace,debug} from "./services/logging";
+"use strict";
 
-var React = require('./react');
-var Router = require('./react-router');
+import {trace,debug} from 'services/logging';
+
+import React from 'react';
+import Router from 'react-router';
+
+import {PoolBar} from 'components/pool_bar';
+import {Dashboard} from 'components/dashboard';
+import {PoolView} from 'components/pool_view';
+
+import BlobStore from 'stores/blob_store';
+import ChunkStore from 'stores/chunk_store';
+import PoolStore from 'stores/pool_store';
+
+import Actions from 'actions/actions';
+
+import Pool from '/services/pool'
+import {socket, peer_id} from './services/init'; // initialize
+
 var Route = Router.Route;
 var RouteHandler = Router.RouteHandler;
-
-var {PoolBar} = require('./components/pool_bar');
-var {Dashboard} = require('./components/dashboard');
-var {PoolView} = require('./components/pool_view');
-
-var BlobStore = require('./stores/blob_store');
-var ChunkStore = require('./stores/chunk_store');
-var PoolStore = require('./stores/pool_store');
-
-var Actions = require('./actions/actions');
-
-import Pool from './services/pool'
-import {socket, peer_id} from './services/init'; // initialize
 
 class App extends React.Component {
   constructor() {

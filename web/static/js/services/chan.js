@@ -1,6 +1,6 @@
 "use strict";
 
-import {trace,debug} from "./logging";
+import {trace,debug} from "services/logging";
 
 // Global register of active channels
 var channels = {};

@@ -1,7 +1,9 @@
-import Reflux from '../reflux'
-import {createPool, removePool} from '../actions/actions'
-import db from "../models/database"
-import Chunks from '../services/chunks'
+"use strict";
+
+import Reflux from 'reflux';
+import {createPool, removePool} from 'actions/actions';
+import db from "models/database";
+import Chunks from 'services/chunks';
 
 let PoolStore = Reflux.createStore({
 

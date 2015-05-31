@@ -1,5 +1,7 @@
-import React from '../react'
-import {trace,debug} from "../services/logging"
+"use strict";
+
+import React from 'react';
+import {trace,debug} from "services/logging";
 
 var MAX_RAW_SIZE = 100 * Math.pow(2, 10); // 100 KB
 

@@ -1,9 +1,11 @@
-import React from '../react'
-import {trace,debug} from "../services/logging"
-import {getActiveDownloads} from '../services/chunks'
-import {getActiveUploads} from '../services/peer'
-import {RGChart} from './rg_chart'
-import {peer} from '../services/peer'
+"use strict";
+
+import React from 'react'
+import {trace,debug} from "services/logging"
+import {getActiveDownloads} from 'services/chunks'
+import {getActiveUploads} from 'services/peer'
+import {RGChart} from 'components/rg_chart'
+import {peer} from 'services/peer'
 
 export class NetworkStats extends React.Component {
   constructor(props) {

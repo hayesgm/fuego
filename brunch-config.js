@@ -1,28 +1,3 @@
-  
-var _getAllFilesFromFolder = function(dir) {
-
-    var filesystem = require("fs");
-    var results = [];
-
-    filesystem.readdirSync(dir).forEach(function(file) {
-
-        file = dir+'/'+file;
-        var stat = filesystem.statSync(file);
-
-        if (stat && stat.isDirectory()) {
-            results = results.concat(_getAllFilesFromFolder(file))
-        } else results.push(file);
-
-    });
-
-    return results;
-
-};
-
-_getAllFilesFromFolder(process.cwd()).forEach(function(file) {
-  console.log("File: " + file);
-});
-
 exports.config = {
   // See http://brunch.io/#documentation for docs.
   files: {
@@ -36,7 +11,9 @@ exports.config = {
           'web/static/vendor/js/sha256.js',
           'web/static/vendor/js/lib-typedarrays-min.js',
         ]
-      }
+      },
+      pluginHelpers: 'js/vendor.js'
+
       // To use a separate vendor.js bundle, specify two files path
       // https://github.com/brunch/brunch/blob/stable/docs/config.md#files
       // joinTo: {
@@ -64,10 +41,16 @@ exports.config = {
   // Phoenix paths configuration
   paths: {
     // Which directories to watch
-    watched: ["web/static", "test/static"],
+    watched: ["web/static/js", "web/static/css", "web/static/vendor", "test/static"],
 
     // Where to compile files to
     public: "priv/static"
+  },
+
+  modules: {
+    nameCleaner: function(path) {
+      return path.replace(/^web\/static\/js\//, '');
+    }
   },
 
   // Configure your plugins
@@ -83,7 +66,7 @@ exports.config = {
     // See: http://babeljs.io/docs/usage/options/ 
     babel: {
       // Do not use ES6 compiler in vendor code
-      ignore: [/^(web\/static\/vendor)/],
+      ignore: [/^(web\/static\/vendor)/, /(react|reflux|react-router)\.js$/],
       pattern: /\.(js|jsx)$/,
     }
   }

@@ -1,6 +1,8 @@
-import Reflux from '../reflux'
-import {storeChunk} from '../actions/actions'
-import db from "../models/database"
+"use strict";
+
+import Reflux from 'reflux';
+import {storeChunk} from 'actions/actions';
+import db from "models/database";
 
 let ChunkStore = Reflux.createStore({
 

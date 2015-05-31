@@ -1,10 +1,10 @@
 "use strict";
 
-import {trace,debug} from "./logging";
-import Chan from "./chan";
-import Helpers from "./helpers";
-import ChunkStore from "../stores/chunk_store";
-import BlobStore from "../stores/blob_store";
+import {trace,debug} from "services/logging";
+import Chan from "services/chan";
+import Helpers from "services/helpers";
+import ChunkStore from "stores/chunk_store";
+import BlobStore from "stores/blob_store";
   
 let PEER_JS_API_KEY = 'dx24ylo616y9zfr';
 let peer_id = Helpers.guid();

@@ -1,9 +1,9 @@
 import {Socket} from "phoenix"
-import Peer from "./peer"
-import Pool from "./pool"
-import {trace,debug} from "./logging";
-import db from "../models/database";
-import Chunks from './chunks'
+import Peer from "services/peer"
+import Pool from "services/pool"
+import {trace,debug} from "services/logging";
+import db from "models/database";
+import Chunks from 'services/chunks'
 
 let socket = new Socket("/pm");
 

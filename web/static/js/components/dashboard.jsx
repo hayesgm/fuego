@@ -1,4 +1,6 @@
-import React from '../react'
+"use strict";
+
+import React from 'react';
 
 export class Dashboard extends React.Component {
   render() {

@@ -1,6 +1,8 @@
-import Reflux from '../reflux'
-import {storeBlob} from '../actions/actions'
-import db from "../models/database"
+"use strict";
+
+import Reflux from 'reflux';
+import {storeBlob} from 'actions/actions';
+import db from "models/database";
 
 let BlobStore = Reflux.createStore({
 
