@@ -82,6 +82,7 @@ export class PoolView extends React.Component {
       // clear the url
       URL.revokeObjectURL(this.state.url);
       this.setState({
+        isViewRaw: false,
         buffers: null,
         url: null,
       });

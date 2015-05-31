@@ -21,6 +21,17 @@ export class Cinema extends React.Component {
     });
   }
 
+  // Clear video flag when navigating away from a pool
+  componentWillReceiveProps(props) {
+    if (this.state.showVideo) {
+      if ( !props.pool || !this.props.pool || ( props.pool.pool_id !== this.props.pool.pool_id ) ) {
+        this.setState({
+          showVideo: false
+        });
+      }
+    }
+  }
+
   joinBuffers(buffers) {
     let length = buffers.reduce((res,b) => { return res + b.byteLength; }, 0);
     let res = new Uint8Array(length);
@@ -59,7 +70,7 @@ export class Cinema extends React.Component {
     } else {
       // Otherwise, let's decide what to show
 
-      if (this.props.pool.description.match(/\.mp4$/i)) { // A video
+      if (this.props.pool.description.match(/\.(mp4|webm)$/i)) { // A video
         if (this.state.showVideo) {
           cinema.push(
             <video key="video" src={this.props.url} autoPlay="true" ref="video" controls="true"></video>
