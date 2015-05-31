@@ -15,8 +15,8 @@ import PoolStore from 'stores/pool_store';
 
 import Actions from 'actions/actions';
 
-import Pool from '/services/pool'
-import {socket, peer_id} from './services/init'; // initialize
+import Pool from 'services/pool'
+import {socket, peer_id} from 'services/init'; // initialize
 
 var Route = Router.Route;
 var RouteHandler = Router.RouteHandler;
