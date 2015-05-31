@@ -1,5 +1,7 @@
 "use strict";
 
+import {mode} from "env";
+
 function trace() {
   if (arguments.length == 1) {
     console.log(arguments[0]);  
@@ -8,7 +10,7 @@ function trace() {
   }
 }
 
-if (location.host.match(/^dev|localhost/i)) {
+if (mode.debug) {
   var debug = trace;
 } else {
   var debug = function() {};

@@ -1,9 +1,11 @@
-import {Socket} from "phoenix"
-import Peer from "services/peer"
-import Pool from "services/pool"
+"use strict";
+
+import {Socket} from "phoenix";
+import Peer from "services/peer";
+import Pool from "services/pool";
 import {trace,debug} from "services/logging";
 import db from "models/database";
-import Chunks from 'services/chunks'
+import Chunks from 'services/chunks';
 
 let socket = new Socket("/pm");
 

@@ -1,5 +1,6 @@
 "use strict";
 
+import {mode} from "env"
 import {trace,debug} from "services/logging";
 import Chan from "services/chan";
 import Helpers from "services/helpers";
@@ -17,7 +18,7 @@ let activeUploads = [];
 const RECONNECTION_TIMEOUT = 10000;
 
 if (window.Peer) {
-  peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: 3}); // optional for now
+  peer = new Peer(peer_id, {key: PEER_JS_API_KEY, debug: mode.debug ? 3 : 1, secure: mode.prod}); // optional for now
 
   peer.on('connection', function(conn) {
     conn.on('close', function() {
