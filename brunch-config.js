@@ -10,6 +10,8 @@ exports.config = {
         before: [
           'web/static/vendor/js/sha256.js',
           'web/static/vendor/js/lib-typedarrays-min.js',
+          'web/static/vendor/js/pdf.worker.js.js',
+          'web/static/vendor/js/pdf.js',
         ]
       },
       pluginHelpers: 'js/vendor.js'

@@ -45,6 +45,32 @@ export class Cinema extends React.Component {
     return String.fromCharCode.apply(null, new Uint16Array(res));;
   }
 
+  componentDidUpdate() {
+    debug("cinema 1", PDFJS);
+    if (this.refs.pdf) {
+      debug("cinema 2", this.props.url);
+      let canvas = this.refs.pdf.getDOMNode()
+      let ctx = canvas.getContext('2d');
+
+      PDFJS.getDocument(this.props.url).then(function (pdfDoc) {
+        pdfDoc.getPage(1).then(function(page) {
+
+          var viewport = page.getViewport(scale);
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Render PDF page into canvas context
+          var renderContext = {
+            canvasContext: ctx,
+            viewport: viewport,
+          };
+
+          var renderTask = page.render(renderContext);
+        });
+      });
+    }
+  }
+
   render() {
     if (!this.props.finished) {
       return (
@@ -92,6 +118,10 @@ export class Cinema extends React.Component {
         cinema.push(
           <pre key="text">{this.joinBuffers(this.props.buffers)}</pre>
         );
+      } else if (this.props.pool.description.match(/(pdf)$/i)) { // A pdf document
+        cinema.push(
+          <canvas key="pdf" ref="pdf"/>
+        )
       } else {
         cinema.push(
           <a key="download" className="btn btn-default btn-lg download" href={this.props.url} download={this.props.pool.description}>Download {this.props.pool.description}</a>
