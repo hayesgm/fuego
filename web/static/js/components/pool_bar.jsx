@@ -71,23 +71,18 @@ export class PoolBar extends React.Component {
   render() {
     return (
       <div id="leftNav">
-        <div className="row">
-          <div className="col-xs-12" id="navigation">
-            <PoolBarList pools={this.props.pools} chunks={this.props.chunks}/>
-          </div>
+        <div id="navigation">
+          <PoolBarList pools={this.props.pools} chunks={this.props.chunks}/>
         </div>
 
-        <div className="row" id="bottomNav">
-          <div className="col-md-12">
-            <div className="row">
-              <div className="col-md-12">
-                <button id="upload" type="button" className="btn btn-default btn-lg" onClick={this.selectFile.bind(this)}>Add Pool</button>
-                <input type="file" id="fileInput" ref="file" onChange={this.uploadFile.bind(this)}/>
-              </div>
-            </div>
-            <div className="row">
-              by <a href="https://twitter.com/justHGH">justHGH</a>
-            </div>
+        <div id="bottom-navigation">
+          <div id="upload">
+            <button id="upload" type="button" className="btn btn-default btn-lg" onClick={this.selectFile.bind(this)}>Add Pool</button>
+            <input type="file" id="fileInput" ref="file" onChange={this.uploadFile.bind(this)}/>
+          </div>
+          
+          <div id="credits">
+            by <a href="https://twitter.com/justHGH">justHGH</a>
           </div>
         </div>
       </div>

@@ -9,13 +9,11 @@ body
   font-family: sans-serif
 
 #top
-  display: flex
-  min-height: 100vh
-  flex-direction: column
 
   .full-width
     display: flex
-    flex: 1
+
+    min-height: 100vh
 
     .left
       order: -1
@@ -33,43 +31,53 @@ body
   min-height: 100%
   width: 100%
   position: absolute
+  display: flex
+  flex-direction: column
+  justify-content: space-between
 
-  ul
-    width: 100%
-
-    li
+  #navigation
+    ul
       width: 100%
-      list-style-type: none
-      font-size: 1.3em
-      min-height: 60px
+      padding-left: 0px
 
-      .name
-        display: inline-block
-        padding: 16px 10px 10px 10px
-        cursor: pointer
+      li
+        width: 100%
+        list-style-type: none
+        font-size: 1.3em
+        min-height: 60px
+        padding-left: 40px
 
-        .desc
-          word-break: break-all
-          word-break: break-word
+        .name
+          display: inline-block
+          padding: 16px 10px 10px 10px
+          cursor: pointer
 
-      a
-        &.active
-          color: #eee
+          .desc
+            word-break: break-all
+            word-break: break-word
 
-      &:hover
-        background-color: #555
+        a
+          &.active
+            color: #eee
 
-  #bottomNav
+        &:hover
+          background-color: #555
+
+  #bottom-navigation
     padding-left: 30px
-    padding-bottom: 30px
+    padding-bottom: 10px
     width: 100%
 
     #upload
-      width: 60%
-      margin-bottom: 30px
+      margin-bottom: 20px
+      width: 82%
 
     input[type="file"]
       display: none
+
+    #credits
+      text-align: right
+      margin-right: 10px
 
 #main
   padding: 50px

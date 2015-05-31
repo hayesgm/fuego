@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Burn After Reading</title>
+    <title>Transfer files with VCR.Link</title>
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/libraries.css") %>">
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
   </head>
