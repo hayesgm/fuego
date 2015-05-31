@@ -1,4 +1,4 @@
-
+  
 var _getAllFilesFromFolder = function(dir) {
 
     var filesystem = require("fs");
@@ -58,9 +58,6 @@ exports.config = {
         'css/libraries.css': /^(web\/static\/vendor\/css)/,
         'css/app.css': /^(web\/static\/css)/
       }
-    },
-    templates: {
-      joinTo: 'js/app.js'
     }
   },
 
