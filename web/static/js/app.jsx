@@ -127,7 +127,7 @@ App.contextTypes = {
 // declare our routes and their hierarchy
 var routes = (
   <Route handler={App} path="">
-    <Route path="" handler={Dashboard} name="dashboard"/>
+    <Route path="/" handler={Dashboard} name="dashboard"/>
     <Route path=":pool_id" name="pool" handler={PoolView}/>
   </Route>
 );
