@@ -90,7 +90,7 @@ class App extends React.Component {
   }
 
   fetchPool(pool_id) {
-    Pool.fetch(socket, peer_id, pool_id);
+    return Pool.fetch(socket, peer_id, pool_id);
   }
 
   deletePool(pool) {

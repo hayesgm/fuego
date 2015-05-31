@@ -29,8 +29,6 @@ export class PoolView extends React.Component {
   };
 
   componentWillReceiveProps(props) {
-    debug("getting da props");
-
     this.onPoolIdChange(props)
   }
 
@@ -48,6 +46,7 @@ export class PoolView extends React.Component {
       let poolChunks = props.chunks[pool.pool_id] || [];
 
       this.setState({
+        error: null,
         pool: pool,
         poolChunks: poolChunks,
         percentComplete: Math.round(poolChunks.length / ( pool.chunks.length / 100.0 ) ),
@@ -57,7 +56,17 @@ export class PoolView extends React.Component {
       if (props.poolsLoaded) {
         debug("pool view // didn't find pool");
 
-        props.fetchPool(props.params.pool_id);
+        props.fetchPool(props.params.pool_id).catch((err) => {
+          debug("pool fetch error", err);
+
+          if (err.reason == "pool not found") {
+            var error = "Sorry, we were unable to find that pool.";
+          }
+
+          this.setState({
+            error: error,
+          });
+        });
       }
     }
 
@@ -115,6 +124,10 @@ export class PoolView extends React.Component {
 
   render() {
     debug("pool", this.state.pool);
+
+    if (this.state.error) {
+      return <div className="pool-error">{this.state.error}</div>;
+    }
 
     if (!this.state.pool) {
       return <div></div>;
