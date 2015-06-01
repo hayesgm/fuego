@@ -12,7 +12,7 @@ defmodule Fuego.PageController do
     unless conn.scheme == :https do
       status = if conn.method in ~w(HEAD GET), do: 301, else: 307
 
-      uri = %URI{scheme: "https", host: conn.host, path: full_path(conn), port: conn.port}
+      uri = %URI{scheme: "https", host: conn.host, path: full_path(conn)}
 
       conn
         |> put_resp_header("location", to_string(uri))
