@@ -9,6 +9,8 @@ defmodule Fuego.PageController do
 
   # From Plug.SSL, modified
   defp redirect_to_https(conn, opts) do
+    Mix.shell.info inspect conn
+
     unless conn.scheme == :https do
       status = if conn.method in ~w(HEAD GET), do: 301, else: 307
 
