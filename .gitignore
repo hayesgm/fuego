@@ -28,3 +28,4 @@ erl_crash.dump
 bower_components
 fuego/
 *~
+.DS_Store
