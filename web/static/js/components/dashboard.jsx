@@ -13,8 +13,9 @@ export class Dashboard extends React.Component {
   render() {
     let examplesList = Object.keys(EXAMPLES).map((pool_id) => {
       return (
-        <li>
-          <Link to="pool" params={{pool_id: pool_id}}>{EXAMPLES[pool_id]}</Link></li>
+        <li key={pool_id}>
+          <Link to="pool" params={{pool_id: pool_id}}>{EXAMPLES[pool_id]}</Link>
+        </li>
       );
     });
 

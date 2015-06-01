@@ -10,7 +10,7 @@ import {trace,debug} from "services/logging";
 import db from "models/database";
 import Chunks from 'services/chunks';
 
-let socket = new Socket("/pm");
+let socket = new Socket(env.prod ? "wss://fuego-hgh.herokuapp.com/pm" : "/pm");
 
 trace("peer", Peer.peer_id, "online...");
 
