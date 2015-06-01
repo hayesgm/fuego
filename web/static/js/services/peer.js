@@ -28,7 +28,7 @@ if (window.Peer) { // optional?
     var config = {
       host: 'fuego-peer-server.herokuapp.com',
       secure: location.protocol === 'https:',
-      port: null,
+      port: location.protocol === 'https:' ? 443 : 80,
     };
   }
 
