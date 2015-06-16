@@ -182,6 +182,56 @@ defmodule Fuego.Pool do
     end
   end
 
+  ### Gossiping
+
+  # Tries to load a pool by gossiping with remotes if does not exist locally
+  def fetch_from_remotes(remotes, pool_id) do
+    List.foldl(remotes, get_pool(pool_id), fn remote, pool ->
+      case pool do
+        {:ok, pool} -> {:ok, pool} # pass along with modifying
+        :error -> fetch_pool_from_remote(remote, pool_id) # otherwise, try to fetch from next remote
+      end
+    end)
+  end
+
+  # TODO: Test
+  defp api_endpoint(remote, pool_id) do
+    uri = %URI{scheme: "http", host: remote, path: "/api/pools/#{pool_id}"}
+
+    to_string(uri)
+  end
+
+  # TODO: Test
+  def fetch_pool_from_remote(remote, pool_id) do
+    Mix.shell.info "Trying to fech pool #{pool_id} from #{remote}..."
+
+    true = is_sha256?(pool_id) # verify pool is sha256
+
+    url = api_endpoint(remote, pool_id)
+
+    case HTTPoison.get(url) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        pool = body |> Poison.decode!
+        peer_chunks = Enum.reduce(pool["peers"], %{}, fn [chunk, peer_id], dict ->
+          case peer_id do
+            nil -> Dict.put(dict, chunk, [])
+            _ -> Dict.put(dict, chunk, [peer_id])
+          end
+        end)
+        
+        IO.puts("Pool: #{inspect pool}")
+        IO.puts("Peer chunks: #{inspect peer_chunks}")
+
+        true = register_pool(pool["pool_id"], pool["peer_id"], pool["chunks"], pool["description"], pool["chunk_size"], pool["total_size"], peer_chunks)
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        IO.puts "not found"
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        IO.puts "Remote failed #{remote}... #{inspect reason}"
+    end
+  end
+
+  ### Diagnostics
+
   # For diagnostics
   def info(extended \\ false) do
     :ets.foldl(fn {pool_id, _}, _ ->

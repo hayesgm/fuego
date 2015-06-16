@@ -18,7 +18,7 @@ defmodule Fuego.Mixfile do
   def application do
     [mod: {Fuego, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger,
-                    :phoenix_ecto, :postgrex]]
+                    :phoenix_ecto, :postgrex, :httpoison]]
   end
 
   # Specifies which paths to compile per environment
@@ -35,7 +35,8 @@ defmodule Fuego.Mixfile do
      {:phoenix_html, "~> 1.0"},
      {:phoenix_live_reload, "~> 0.4", only: :dev},
      {:cowboy, "~> 1.0"},
-     {:hexate, "~> 0.5.1"}
+     {:hexate, "~> 0.5.1"},
+     {:httpoison, "~> 0.7"}
     ]
   end
 end

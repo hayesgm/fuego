@@ -1,0 +1,9 @@
+* gossiping -- how can you do this without just mass dumping all pools & chunks & peers? is this okay if these are public pools? is this okay if they are private & encrypted? other approach is to only gossip once you hear about a pool and use it to find seeds. this would be safer but make it harder to find peers.
+
+* config.js needs to pull data from the application.html.eex. this will be so we can use config that's set in prod.ex
+
+* if we plan on mirroring, we need to come up with the best way to make links work. the best situation here would be if a link automatically mapped to several mirrors. e.g. mirr.or/pool_id which would pop to a valid mirror.
+
+* speaking of mirroring etc, different domains need to share database storage. e.g. my downloads should be the same on mirror-a and mirror-b.
+
+* tests-- we need test cases, probably starting around services and can expand out.

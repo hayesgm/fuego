@@ -18,6 +18,12 @@ defmodule Fuego.Router do
     get "/", PageController, :home
   end
 
+  scope "/api", Fuego do
+    pipe_through :api # use API
+
+    get "/pools/:pool_id", PoolController, :info
+  end
+
   socket "/pm", Fuego do
     channel "pool:*", PoolChannel
   end
