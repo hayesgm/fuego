@@ -3,27 +3,37 @@ defmodule Fuego.Pool do
   # Registers a pool that can be retrieved.
   # pool should be a sha-256 sum of the value of the chunks
   # first seeder is responsible for finding peers for a given pool
-  def register_pool(pool_id, peer_id, chunks, description, chunk_size, total_size) do
+  def register_pool(pool_id, peer_id, chunks, description, chunk_size, total_size, starting_peer_chunks \\ nil) do
     true = is_sha256?(pool_id) # verify pool is sha256
+    Enum.each(chunks, fn chunk -> true = is_sha256?(chunk) end) # verify each chunk is sha-256
 
-    chunk_peers = Enum.reduce chunks, HashDict.new, fn chunk, dict ->
-      # verify each chunk is sha-256
-      true = is_sha256?(chunk)
-
-      # Start with you as the host of everything
-      Dict.put(dict, chunk, [peer_id])
+    peer_chunks = case starting_peer_chunks do
+      nil -> 
+        Enum.reduce(chunks, HashDict.new, fn chunk, dict ->
+          # Default to start with you as the host of everything
+          Dict.put(dict, chunk, [peer_id])
+        end)
+      v -> v
     end
 
-    peer_claims = Enum.map chunks, fn chunk ->
-      {pool_id, chunk}
+    # Look at which peers are claiming which chunks
+    # This is so that if they drop we can quickly remove all their claims
+    peer_claims = Enum.reduce peer_chunks, %{}, fn {chunk, peers}, acc ->
+      Enum.reduce peers, acc, fn peer_id, dict ->
+        chunks = dict[peer_id] || []
+        Dict.put(dict, peer_id, chunks ++ [{pool_id,chunk}])
+      end
     end
 
     # Note, these should be started in our supervisor's supervision tree
     # For now, we're ignoring that details
-    {:ok, pool_chunk_agent} = Agent.start fn -> chunk_peers end
+    {:ok, pool_chunk_agent} = Agent.start fn -> peer_chunks end
     
     :ets.insert(:pool_registry, {pool_id, [chunks: chunks, description: description, chunk_size: chunk_size, total_size: total_size, pool_chunk_agent: pool_chunk_agent]})
-    get_or_create_claim_agent_for_peer(peer_id, peer_claims)
+    
+    Enum.each peer_claims, fn {peer_id, peer_claims} ->
+      get_or_create_claim_agent_for_peer(peer_id, peer_claims)
+    end
 
     true
   end
@@ -88,7 +98,7 @@ defmodule Fuego.Pool do
         Agent.update(claim_agent, fn list -> list ++ peer_claims end)
 
         {:ok, claim_agent}
-      {:error} -> create_claim_agent(peer_id)
+      {:error} -> create_claim_agent(peer_id, peer_claims)
     end
   end
 

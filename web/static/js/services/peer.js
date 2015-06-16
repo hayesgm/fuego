@@ -6,8 +6,8 @@ import Chan from "services/chan";
 import Helpers from "services/helpers";
 import ChunkStore from "stores/chunk_store";
 import BlobStore from "stores/blob_store";
-  
-let PEER_JS_API_KEY = 'dx24ylo616y9zfr';
+import Config from "services/config";
+
 let peer_id = Helpers.guid();
 let peers = {};
 let errorHandlers = {};
@@ -16,90 +16,86 @@ let peer = null;
 let activeUploads = [];
 
 const RECONNECTION_TIMEOUT = 10000;
-
-if (window.Peer) { // optional?
   
-  if (env.debug) {
-    var config = {
-      key: PEER_JS_API_KEY,
-      debug: 3,
-    };
-  } else {
-    var config = {
-      host: 'fuego-peer-server.herokuapp.com',
-      secure: location.protocol === 'https:',
-      port: location.protocol === 'https:' ? 443 : 80,
-    };
-  }
-
-  trace("initializing peer", peer_id, config);
-  
-  peer = new Peer(peer_id, config);
-
-  peer.on('connection', function(conn) {
-    conn.on('close', function() {
-      debug("removing peer", conn, conn.remotePeerId);
-      delete peers[conn.remotePeerId];
-      debug("now", peers);
-
-      activeUploads = activeUploads.filter(d => { return d[1] == conn.remotePeerId; }); // remove ourselves
-    });
-
-    // "Seeder" being asked for a chunk
-    conn.on('data', function(data){
-      debug("peer data", data);
-
-      var [pool_id, chunk] = data;
-
-      activeUploads.push([pool_id, conn.remotePeerId, conn]); // add ourselves for stat tracking
-
-      // TODO: when we don't have the chunk?
-
-      trace("Sending peer chunk", pool_id, chunk);
-      BlobStore.getBlob(chunk).then(blob => {
-        if (blob) {
-          conn.send([pool_id, chunk, blob.data]);
-        } else {
-          conn.send([pool_id, chunk, null]); // say we don't have it
-        }
-      });
-    });
-  });
-
-  peer.on('close', () => {
-    trace("peer closed");
-  });
-
-  peer.on('disconnected', () => {
-    trace("peer lost connection, reconnecting in " + Math.round(RECONNECTION_TIMEOUT/1000.0) + " seconds...");
-
-    setTimeout(() => {
-      debug("reconnecting...");
-      peer.reconnect();
-    }, RECONNECTION_TIMEOUT);
-  });
-
-  peer.on('error', (err) => {
-    let match = err.message.match(/peer\s([^\s]+)/i);
-
-    // this is a hack right now to find connection errors
-    if (err.type == "peer-unavailable" && match) {
-      let remotePeerId = match[1];
-
-      debug("peer unavailable", remotePeerId, err);
-
-      errors[remotePeerId] = err;
-
-      // Call the error function(s) for this peer
-      errorHandlers[remotePeerId].forEach((errorHandler) => {
-        errorHandler.call(err);
-      });
-    } else {
-      trace("peer error", err);
-    }
-  });
-
+if (env.debug) {
+  var config = {
+    key: Config.PEER_JS_API_KEY,
+    debug: 3,
+  };
+} else {
+  var config = {
+    host: Config.PEER_JS_SERVER,
+    secure: location.protocol === 'https:',
+    port: location.protocol === 'https:' ? 443 : 80,
+  };
 }
+
+trace("initializing peer", peer_id, config);
+
+peer = new Peer(peer_id, config);
+
+peer.on('connection', function(conn) {
+  conn.on('close', function() {
+    debug("removing peer", conn, conn.remotePeerId);
+    delete peers[conn.remotePeerId];
+    debug("now", peers);
+
+    activeUploads = activeUploads.filter(d => { return d[1] == conn.remotePeerId; }); // remove ourselves
+  });
+
+  // "Seeder" being asked for a chunk
+  conn.on('data', function(data){
+    debug("peer data", data);
+
+    var [pool_id, chunk] = data;
+
+    activeUploads.push([pool_id, conn.remotePeerId, conn]); // add ourselves for stat tracking
+
+    // TODO: when we don't have the chunk?
+
+    trace("Sending peer chunk", pool_id, chunk);
+    BlobStore.getBlob(chunk).then(blob => {
+      if (blob) {
+        conn.send([pool_id, chunk, blob.data]);
+      } else {
+        conn.send([pool_id, chunk, null]); // say we don't have it
+      }
+    });
+  });
+});
+
+peer.on('close', () => {
+  trace("peer closed");
+});
+
+peer.on('disconnected', () => {
+  trace("peer lost connection, reconnecting in " + Math.round(RECONNECTION_TIMEOUT/1000.0) + " seconds...");
+
+  setTimeout(() => {
+    debug("reconnecting...");
+    peer.reconnect();
+  }, RECONNECTION_TIMEOUT);
+});
+
+peer.on('error', (err) => {
+  let match = err.message.match(/peer\s([^\s]+)/i);
+
+  // this is a hack right now to find connection errors
+  if (err.type == "peer-unavailable" && match) {
+    let remotePeerId = match[1];
+
+    debug("peer unavailable", remotePeerId, err);
+
+    errors[remotePeerId] = err;
+
+    // Call the error function(s) for this peer
+    errorHandlers[remotePeerId].forEach((errorHandler) => {
+      errorHandler.call(err);
+    });
+  } else {
+    trace("peer error", err);
+  }
+});
 
 function seed(chan, pool_id, chunk) {
   // debug("seeding", pool_id, chunk);
@@ -107,8 +103,13 @@ function seed(chan, pool_id, chunk) {
 };
 
 function release(chan, pool_id, chunk) {
-  // debug("seeding", pool_id, chunk);
-  chan.push("release_chunk", {pool_id: pool_id, chunk: chunk});
+  debug("releasing", pool_id, chunk);
+  return new Promise((resolve, reject) => {
+    chan.push("drop_chunk", {pool_id: pool_id, chunk: chunk})
+      .receive("ok", (message) => resolve() )
+      .receive("error", (reasons) => reject(reasons) )
+      .after(10000, () => debug("Networking issue. Still waiting...") );
+  });
 };
 
 function connectRemote(remotePeerId, onError) {
@@ -154,6 +155,7 @@ function getActiveUploads() {
 let p = {
   peer: peer,
   seed: seed,
+  release: release,
   peer_id: peer_id,
   getRemote: getRemote,
   connectRemote: connectRemote,

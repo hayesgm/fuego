@@ -63,9 +63,26 @@ function create(socket, peer_id, pool_id, chunks, description, chunk_size, total
   });
 }
 
+function remove(pool_id) {
+  return new Promise((resolve, reject) => {
+    if (channels[pool_id]) {
+      let [chan,reply] = channels[pool_id];
+
+      delete channels[pool_id]; // now remove it
+
+      chan.leave().receive("ok", () => {
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
+}
+
 let Chan = {
   find: find,
   create: create,
+  remove: remove,
   getOpenChannel: getOpenChannel
 };
 

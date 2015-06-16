@@ -86,21 +86,27 @@ function destroy(socket, peer_id, pool) {
   trace("destroying pool", pool.pool_id);
 
   let promise = new Promise((resolve, reject) => {
-    Chan.find(socket, peer_id, pool.pool_id).then( (chan, _response) => {
+    return Chan.find(socket, peer_id, pool.pool_id).then( ([chan, _response]) => {
       // Let's seed each of the chunks
-      pool.chunks.forEach((chunk) => {
+      let promises = pool.chunks.map((chunk) => {
         debug("releasing chunk", chunk)
         Peer.release(chan, pool.pool_id, chunk);
       });
- 
-      resolve(); // existed, removed ourselves
+      
+      Promise.all(promises).then(() => {
+        resolve(); // existed, removed ourselves
+      }).catch((reasons) => {
+        reject(reason);
+      });
     }).catch(() => {
       resolve(false); // doesn't exist
     });
   });
 
   return promise.then((_removed) => {
-    return PoolStore.destroyPool(pool.pool_id);
+    return PoolStore.destroyPool(pool.pool_id).then(() => {
+      return Chan.remove(pool.pool_id);
+    });
   })
 }
 

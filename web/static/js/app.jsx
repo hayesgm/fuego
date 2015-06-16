@@ -83,7 +83,10 @@ class App extends React.Component {
     // TODO: This should be atomic?
     debug("adding chunk", chunk.pool_id, chunk, "to", this.state.chunks);
     let chunks = this.state.chunks;
-    chunks[chunk.pool_id].push(chunk);
+    if (chunks[chunk.pool_id].indexOf(chunk) === -1) {
+      chunks[chunk.pool_id].push(chunk);
+    }
+
     this.setState({
       chunks: chunks,
     });
