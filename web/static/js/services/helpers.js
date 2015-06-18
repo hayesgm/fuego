@@ -14,9 +14,16 @@ var diff = function(a, b) {
   return a.filter(function(i) {return b.indexOf(i) < 0;});
 };
 
+var assert = function(assertion, message) {
+  if (!assertion) {
+    throw message;
+  }
+}
+
 let Helpers = {
   guid: guid,
   diff: diff,
+  assert: assert,
   values: obj => Object.keys(obj).map(key => obj[key])
 };
 

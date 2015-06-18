@@ -1,5 +1,7 @@
 "use strict";
 
+import {assert} from 'services/helpers';
+
 let serverPromise = db.open({
   server: 'burn-pm-7',
   version: 6,
@@ -51,6 +53,11 @@ function findOrCreatePool(pool_id, chunks, description, chunk_size, total_size) 
 
 function createPool(pool_id, chunks, description, chunk_size, total_size) {
   return serverPromise.then((server) => {
+    assert(!!pool_id, "pool store requires pool_id");
+    assert(!!chunks, "pool store requires chunks");
+    assert(!!chunk_size, "pool store requires chunk_size");
+    assert(!!total_size, "pool store requires total_size");
+
     return server.pools.add({
       pool_id: pool_id,
       chunks: chunks,
@@ -146,6 +153,9 @@ function getAllChunkData(pool_id) {
 
 function storeBlob(chunk, data) {
   return serverPromise.then((server) => {
+    assert(!!chunk, "blob store requires chunk");
+    assert(!!data, "blob store requires data");
+
     return server.blobs.query('chunk').only(chunk).execute().then(blobs => {
       if (blobs.length > 0) {
         return blobs[0];
@@ -163,6 +173,10 @@ function storeBlob(chunk, data) {
 
 function storeChunk(pool_id, chunk, blob_id) {
   return serverPromise.then((server) => {
+    assert(!!pool_id, "chunk store requires pool_id");
+    assert(!!chunk, "chunk store requires chunk");
+    assert(!!blob_id, "chunk store requires blob_id");
+
     return server.chunks.query('chunk').only(chunk).filter('pool_id', pool_id).execute().then(chunks => {
       if (chunks.length > 0) {
         return chunks[0];
