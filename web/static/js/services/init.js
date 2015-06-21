@@ -16,7 +16,7 @@ function init() {
 
   db.init(); // connect to database
 
-  let socket = new Phoenix.Socket(ENDPOINT);
+  socket = new Phoenix.Socket(ENDPOINT);
 
   Peer.init(); // initialize ourselves as a peer
 
@@ -47,7 +47,7 @@ function init() {
 
 let Init = {
   init: init,
-  socket: () => { socket },
+  socket: () => { return socket; },
   peer_id: Peer.peer_id
 };
 

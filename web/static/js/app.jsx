@@ -16,9 +16,11 @@ import PoolStore from 'stores/pool_store';
 import Actions from 'actions/actions';
 
 import Pool from 'services/pool'
-import {init, socket, peer_id} from 'services/init';
+import Init from 'services/init';
 
-init(); // initialize
+Init.init(); // initialize
+let socket = Init.socket(); // this needs to come after init is called
+let peer_id = Init.peer_id;
 
 var Route = Router.Route;
 var RouteHandler = Router.RouteHandler;
@@ -85,14 +87,19 @@ class App extends React.Component {
     // TODO: This should be atomic?
     debug("adding chunk", chunk.pool_id, chunk, "to", this.state.chunks);
     let chunks = this.state.chunks;
-    let poolChunks = chunks[chunk.pool_id].map((chunk) => chunk.chunk);
-    if (poolChunks.indexOf(chunk.chunk) === -1) {
-      chunks[chunk.pool_id].push(chunk);
-    }
 
-    this.setState({
-      chunks: chunks,
-    });
+    if (chunks[chunk.pool_id]) { // skip if we don't know about pool
+      let poolChunks = chunks[chunk.pool_id].map((chunk) => chunk.chunk);
+      if (poolChunks.indexOf(chunk.chunk) === -1) {
+        chunks[chunk.pool_id].push(chunk);
+      }
+
+      this.setState({
+        chunks: chunks,
+      });
+    } else {
+      debug("no pool for", chunk.pool_id);
+    }
   }
 
   fetchPool(pool_id) {

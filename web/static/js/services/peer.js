@@ -158,7 +158,7 @@ function getActiveUploads() {
 
 export default {
   init: init,
-  peer: () => { peer },
+  peer: () => { return peer; },
   seed: seed,
   release: release,
   peer_id: peer_id,
