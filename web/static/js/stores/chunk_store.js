@@ -1,6 +1,6 @@
 "use strict";
 
-import Reflux from 'reflux';
+import Reflux from 'includes/reflux';
 import {storeChunk} from 'actions/actions';
 import db from "models/database";
 

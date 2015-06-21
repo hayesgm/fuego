@@ -1,6 +1,6 @@
 "use strict";
 
-import React from 'react'
+import React from 'includes/react'
 import {trace,debug} from "services/logging"
 import {getActiveDownloads} from 'services/chunks'
 import {getActiveUploads} from 'services/peer'

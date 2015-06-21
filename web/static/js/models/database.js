@@ -2,32 +2,36 @@
 
 import {assert} from 'services/helpers';
 
-let serverPromise = db.open({
-  server: 'burn-pm-7',
-  version: 6,
-  schema: {
-    pools: { // {pool_id, chunks, description, chunk_size, total_size}
-      key: { keyPath: 'pool_id' },
-      indexes: {
-        pool_id: { unique: true }
-      }
-    },
-    chunks: { // {chunk, pool_id, blob_id }
-      key: { keyPath: 'chunk' },
-      indexes: {
-        chunk: {},
-        pool_id: {}
-      }
-    },
-    blobs: { // {blob_id, chunk, data}
-      key: { keyPath: 'blob_id', autoIncrement: true },
-      indexes: {
-        blob_id: {},
-        chunk: { unique: true }
+let serverPromise = null;
+
+function init() {
+  serverPromise = db.open({
+    server: 'burn-pm-7',
+    version: 6,
+    schema: {
+      pools: { // {pool_id, chunks, description, chunk_size, total_size}
+        key: { keyPath: 'pool_id' },
+        indexes: {
+          pool_id: { unique: true }
+        }
+      },
+      chunks: { // {chunk, pool_id, blob_id }
+        key: { keyPath: 'chunk' },
+        indexes: {
+          chunk: {},
+          pool_id: {}
+        }
+      },
+      blobs: { // {blob_id, chunk, data}
+        key: { keyPath: 'blob_id', autoIncrement: true },
+        indexes: {
+          blob_id: {},
+          chunk: { unique: true }
+        }
       }
     }
-  }
-})
+  });
+}
 
 function getServer() {
   return serverPromise;
@@ -194,6 +198,7 @@ function storeChunk(pool_id, chunk, blob_id) {
 }
 
 let Database = {
+  init: init,
   getServer: getServer,
   getPools: getPools,
   findOrCreatePool: findOrCreatePool,

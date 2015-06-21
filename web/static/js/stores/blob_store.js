@@ -1,6 +1,6 @@
 "use strict";
 
-import Reflux from 'reflux';
+import Reflux from 'includes/reflux';
 import {storeBlob} from 'actions/actions';
 import db from "models/database";
 

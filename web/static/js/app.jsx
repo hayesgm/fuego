@@ -2,8 +2,8 @@
 
 import {trace,debug} from 'services/logging';
 
-import React from 'react';
-import Router from 'react-router';
+import React from 'includes/react';
+import Router from 'includes/react-router';
 
 import {PoolBar} from 'components/pool_bar';
 import {Dashboard} from 'components/dashboard';
@@ -18,7 +18,7 @@ import Actions from 'actions/actions';
 import Pool from 'services/pool'
 import {init, socket, peer_id} from 'services/init';
 
-init.init(); // initialize
+init(); // initialize
 
 var Route = Router.Route;
 var RouteHandler = Router.RouteHandler;

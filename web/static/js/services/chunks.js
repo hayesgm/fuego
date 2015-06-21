@@ -20,6 +20,7 @@ let activeDownloads = [];
 
 let downloadPromises = {};
 
+// Peers that we'd rather avoid since we had problems connecting with
 let badPeers = [];
 
 const DOWNLOAD_TIMEOUT = 30000; // 30 seconds

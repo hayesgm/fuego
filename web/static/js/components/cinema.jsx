@@ -1,6 +1,6 @@
 "use strict";
 
-import React from 'react';
+import React from 'includes/react';
 import {trace,debug} from "services/logging";
 
 var MAX_RAW_SIZE = 100 * Math.pow(2, 10); // 100 KB

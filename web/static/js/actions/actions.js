@@ -1,6 +1,6 @@
 "use strict";
 
-import Reflux from 'reflux';
+import Reflux from 'includes/reflux';
 
 let createPool = Reflux.createAction({async_result: true});
 let storeChunk = Reflux.createAction({async_result: true});

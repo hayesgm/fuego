@@ -1,7 +1,7 @@
 "use strict";
 
-import React from 'react';
-import {Link} from 'react-router';
+import React from 'includes/react';
+import {Link} from 'includes/react-router';
 import PoolStore from 'stores/pool_store';
 import {debug} from 'services/logging';
 import Pool from 'services/pool';

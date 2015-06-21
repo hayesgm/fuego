@@ -1,6 +1,6 @@
 "use strict";
 
-import React from 'react';
+import React from 'includes/react';
 import {trace,debug} from "services/logging";
 import PoolStore from 'stores/pool_store';
 import {Cinema} from 'components/cinema';

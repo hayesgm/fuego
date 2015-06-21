@@ -4,6 +4,7 @@ import {env} from "env";
 
 var logs = [];
 
+// Private function to display logs to screen
 function display() {
   if (arguments.length == 1) {
     console.log(arguments[0]);  
@@ -12,6 +13,7 @@ function display() {
   }
 }
 
+// Trace will print logs in debug mode, and store logs in production mode so we can forward to error handler
 function trace() {
   logs.push(arguments);
 
@@ -20,6 +22,7 @@ function trace() {
   }
 }
 
+// Debug will print logs in debug mode and do nothing in production mode
 if (env.debug) {
   var debug = display;
 } else {

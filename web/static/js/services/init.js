@@ -1,9 +1,6 @@
 "use strict";
 
-trace("initializing environment", env.prod ? "prod" : "dev");
-
 import {env} from 'env';
-import {Socket} from "phoenix";
 import Peer from "services/peer";
 import Pool from "services/pool";
 import {trace,debug} from "services/logging";
@@ -11,17 +8,27 @@ import db from "models/database";
 import Chunks from 'services/chunks';
 import {ENDPOINT} from 'services/config';
 
+let socket = null;
+
+// Runs initializaiton code to connect to a peer group
 function init() {
-  let socket = new Socket(ENDPOINT);
+  trace("initializing environment", env.prod ? "prod" : "dev");
+
+  db.init(); // connect to database
+
+  let socket = new Phoenix.Socket(ENDPOINT);
+
+  Peer.init(); // initialize ourselves as a peer
 
   trace("peer", Peer.peer_id, "online...");
 
-  socket.connect();
+  socket.connect(); // connect to web socket
 
-  Pool.refresh(socket, Peer.peer_id);
+  Pool.refresh(socket, Peer.peer_id); // tell server about any pools we know about
 
-  debug("ready...");
+  debug("ready..."); // and we're good to go
 
+  // Handy debug function if we need to see what's going on
   window.fuego = function() {
     return {
       peer: Peer,
@@ -40,7 +47,7 @@ function init() {
 
 let Init = {
   init: init,
-  socket: socket,
+  socket: () => { socket },
   peer_id: Peer.peer_id
 };
 
