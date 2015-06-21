@@ -9,8 +9,9 @@ import Pool from "services/pool";
 import {trace,debug} from "services/logging";
 import db from "models/database";
 import Chunks from 'services/chunks';
+import {ENDPOINT} from 'services/config';
 
-let socket = new Socket(env.prod ? "wss://fuego-hgh.herokuapp.com/pm" : "/pm");
+let socket = new Socket(ENDPOINT);
 
 trace("peer", Peer.peer_id, "online...");
 
