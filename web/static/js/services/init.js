@@ -11,32 +11,35 @@ import db from "models/database";
 import Chunks from 'services/chunks';
 import {ENDPOINT} from 'services/config';
 
-let socket = new Socket(ENDPOINT);
+function init() {
+  let socket = new Socket(ENDPOINT);
 
-trace("peer", Peer.peer_id, "online...");
+  trace("peer", Peer.peer_id, "online...");
 
-socket.connect();
+  socket.connect();
 
-Pool.refresh(socket, Peer.peer_id);
+  Pool.refresh(socket, Peer.peer_id);
 
-debug("ready...");
+  debug("ready...");
 
-window.fuego = function() {
-  return {
-    peer: Peer,
-    db: {
-      peer_id: Peer.peer_id,
-      server: db.getServer(),
-      pools: db.getServer().then((server) => { return server.pools.query().all().execute().then(x => {trace("pools",x)}) }),
-      chunks: db.getServer().then((server) => { return server.chunks.query().all().execute().then(x => {trace("chunks",x)}) }),
-      blobs: db.getServer().then((server) => { return server.blobs.query().all().execute().then(x => {trace("blobs",x)}) })
-    },
-    downloads: Chunks.getActiveDownloads(),
-    queue: Chunks.getDownloadQueue(),
+  window.fuego = function() {
+    return {
+      peer: Peer,
+      db: {
+        peer_id: Peer.peer_id,
+        server: db.getServer(),
+        pools: db.getServer().then((server) => { return server.pools.query().all().execute().then(x => {trace("pools",x)}) }),
+        chunks: db.getServer().then((server) => { return server.chunks.query().all().execute().then(x => {trace("chunks",x)}) }),
+        blobs: db.getServer().then((server) => { return server.blobs.query().all().execute().then(x => {trace("blobs",x)}) })
+      },
+      downloads: Chunks.getActiveDownloads(),
+      queue: Chunks.getDownloadQueue(),
+    };
   };
-};
+}
 
 let Init = {
+  init: init,
   socket: socket,
   peer_id: Peer.peer_id
 };

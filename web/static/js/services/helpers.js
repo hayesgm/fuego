@@ -11,13 +11,15 @@ var guid = function() {
     s4() + '-' + s4() + s4() + s4();
 };
 
+// Returns the different between two arrays
 var diff = function(a, b) {
   return a.filter(function(i) {return b.indexOf(i) < 0;});
 };
 
+// Raises an error unless assertion is true
 var assert = function(assertion, message) {
   if (!assertion) {
-    throw new Error(message);
+    throw new Error(message || "assertion failed");
   }
 }
 
