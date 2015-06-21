@@ -1,0 +1,6 @@
+{
+	"testDirectoryName": "test/js",
+  "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
+  "testFileExtensions": ["es6", "js", "jsx"],
+  "moduleFileExtensions": ["js", "json", "es6", "jsx"]
+}

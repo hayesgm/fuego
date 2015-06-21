@@ -1,5 +1,6 @@
 "use strict";
 
+// Generates a semi-random GUID. This doesn't have to be anything cryptographically strong, but we are hoping it's unique
 var guid = function() {
   function s4() {
     return Math.floor((1 + Math.random()) * 0x10000)
@@ -16,7 +17,7 @@ var diff = function(a, b) {
 
 var assert = function(assertion, message) {
   if (!assertion) {
-    throw message;
+    throw new Error(message);
   }
 }
 

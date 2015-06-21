@@ -1,6 +1,5 @@
 {
-  "repository": {
-  },
+  "repository": {},
   "dependencies": {
     "brunch": "^1.8.1",
     "babel-brunch": "^5.1.2",
@@ -12,10 +11,15 @@
     "react-brunch": "~> 1.0.9"
   },
   "scripts": {
-    "postinstall": "brunch build --production"
+    "postinstall": "brunch build --production",
+    "test": "NODE_PATH=web/static/js jest --verbose --config=jest-config.json"
   },
   "engines": {
     "node": "0.10.35",
     "npm": "2.1.18"
+  },
+  "devDependencies": {
+    "jest-cli": "^0.4.13",
+    "babel-jest": "**"
   }
 }
