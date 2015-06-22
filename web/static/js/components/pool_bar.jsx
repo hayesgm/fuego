@@ -83,6 +83,7 @@ export class PoolBar extends React.Component {
           
           <div id="credits">
             by <a href="https://twitter.com/justHGH">justHGH</a>
+            <div><a target="_blank" href="https://github.com/hayesgm/fuego">Fork me on GitHub</a></div>
           </div>
         </div>
       </div>
