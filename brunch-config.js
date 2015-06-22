@@ -54,6 +54,8 @@ exports.config = {
     }
   },
 
+  sourceMaps: true,
+
   // Configure your plugins
   plugins: {
     react: {
