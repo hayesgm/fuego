@@ -15,7 +15,7 @@ function display() {
 
 // Trace will print logs in debug mode, and store logs in production mode so we can forward to error handler
 function trace() {
-  logs.push(arguments);
+  logs.push(Array.prototype.slice.call(arguments).join(", ")); // convert arguments to array and string (so we can gc any objects)
 
   if (env.debug) {
     display.call(null, arguments);

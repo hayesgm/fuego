@@ -9,7 +9,7 @@ use Mix.Config
 config :fuego, Fuego.Endpoint,
   url: [host: "dev.fuego.link"],
   root: Path.dirname(__DIR__),
-  secret_key_base: "XlVeydd0yLgTKvs/IsvlbcOcilIUGMVVh0OL8bSpGTRz4E82gOxHB6JOCHH0Jo1s",
+  secret_key_base: "XlVeydd0yLgTKvs/IsvlbcOcilIUGMVVh0OL8bSpGTRz4E82gOxHB6JOCHH0Jo1s", # just for local dev
   debug_errors: false,
   pubsub: [name: Fuego.PubSub,
            adapter: Phoenix.PubSub.PG2]
@@ -18,6 +18,9 @@ config :fuego, Fuego.Endpoint,
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
+
+config :fuego,
+  bugsnag_key: System.get_env("BUGSNAG_KEY")
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

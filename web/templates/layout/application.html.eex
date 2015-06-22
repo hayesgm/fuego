@@ -12,6 +12,11 @@
     <title>Fuego.link | Transfer files directly with ease</title>
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/libraries.css") %>">
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
+
+    <%= if Application.get_env(:fuego, :bugsnag_key) != nil do %>
+      <script src="<%= static_path(@conn, "/js/bugsnag.js") %>"></script>
+      <script>require("web/static/libraries/bugsnag").apiKey = "<%= Application.get_env(:fuego, :bugsnag_key) %>";</script>
+    <% end %>
   </head>
 
   <body>

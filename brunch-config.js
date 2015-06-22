@@ -4,7 +4,8 @@ exports.config = {
     javascripts: {
       joinTo: {
         'js/app.js': /^(web\/static\/js)/,
-        'js/vendor.js': /^(web\/static\/vendor)/
+        'js/vendor.js': /^(web\/static\/vendor)/,
+        'js/bugsnag.js': /^(web\/static\/libraries\/bugsnag\.js)/
       },
       order: {
         before: [
@@ -41,7 +42,7 @@ exports.config = {
   // Phoenix paths configuration
   paths: {
     // Which directories to watch
-    watched: ["web/static/js", "web/static/css", "web/static/vendor", "test/static"],
+    watched: ["web/static/js", "web/static/css", "web/static/vendor", "web/static/libraries", "test/static"],
 
     // Where to compile files to
     public: "priv/static"

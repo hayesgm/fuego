@@ -7,6 +7,7 @@ import {trace,debug} from "services/logging";
 import db from "models/database";
 import Chunks from 'services/chunks';
 import {ENDPOINT} from 'services/config';
+import errors from 'services/errors';
 
 let socket = null;
 
@@ -14,6 +15,8 @@ let socket = null;
 function init() {
   return new Promise((resolve, reject) => {
     trace("initializing environment", env.prod ? "prod" : "dev");
+
+    errors.init(); // init error handler
 
     db.init(); // connect to database
 
