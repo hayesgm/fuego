@@ -19,9 +19,9 @@ export class Dashboard extends React.Component {
         <h1>Dashboard</h1>
 
         <p>
-          VCR.Link makes it easy to send files directly to friends or co-workers. Simply select a file from your computer and you'll create
-          a VCR link (e.g. https://vcr.link#/abcdefg). Send a friend this link and when they open it, you'll start sending the file
-          directly to them. Once your friend on the other end gets this file, they can keep it stored in VCR.Link, download it,
+          Fuego.link makes it easy to send files directly to friends or co-workers. Simply select a file from your computer and you'll create
+          a Fuego link (e.g. https://fuego.link#/abcdefg). Send a friend this link and when they open it, you'll start sending the file
+          directly to them. Once your friend on the other end gets this file, they can keep it stored in Fuego.link, download it,
           or view it in the browser.
         </p>
 

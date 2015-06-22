@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>VCR.Link | Transfer files directly with ease</title>
+    <title>Fuego.link | Transfer files directly with ease</title>
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/libraries.css") %>">
     <link rel="stylesheet" href="<%= static_path(@conn, "/css/app.css") %>">
   </head>
