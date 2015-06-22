@@ -25,7 +25,13 @@ export class Dashboard extends React.Component {
           or view it in the browser.
         </p>
 
-        <h2>Examples</h2>
+        <h2>Caveat Emptor</h2>
+
+        <p>
+          Fuego.link is currently <strong>beta</strong> software. You are free to use the software in any legal way you like, but please be aware that data may be wiped from the server or local storage in the browser without notice. You should "Download" any files you wish to have permanently stored.
+        </p>
+
+        <h2>Example Pools</h2>
 
         <ul>
           {examplesList}
