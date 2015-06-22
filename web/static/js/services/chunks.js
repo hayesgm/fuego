@@ -165,65 +165,65 @@ function download(pool_id, chunk, remotePeerId) {
 
       if (!conn) {
         reconnect("peer connection failure");
-      }
+      } else {
+        conn.on('close', () => {
+          reconnect("closed");
+        });
 
-      conn.on('close', () => {
-        reconnect("closed");
-      });
+        conn.on('disconnected', () => {
+          reconnect("disconnected");
+        });
 
-      conn.on('disconnected', () => {
-        reconnect("disconnected");
-      });
+        conn.on('error', (err) => {
+          reconnect(err);
+        });
 
-      conn.on('error', (err) => {
-        reconnect(err);
-      });
+        conn.on('data', (message) => {
+          let [pool_id, chunk, data] = message;
 
-      conn.on('data', (message) => {
-        let [pool_id, chunk, data] = message;
+          debug("rec'd", pool_id, chunk, "from", remotePeerId);
 
-        debug("rec'd", pool_id, chunk, "from", remotePeerId);
+          // track
+          let wasWaitingOnChunk = waiting[pool_id] && ( delete waiting[pool_id][chunk] );
 
-        // track
-        let wasWaitingOnChunk = waiting[pool_id] && ( delete waiting[pool_id][chunk] );
-
-        if (!wasWaitingOnChunk) {
-          debug("ignoring as we already timed out or pool was removed");
-        } else {
-          if (!data) {
-            reconnect("chunk sent empty cell"); // failed to get this chunk from peer
+          if (!wasWaitingOnChunk) {
+            debug("ignoring as we already timed out or pool was removed");
           } else {
-            let wordArray = CryptoJS.lib.WordArray.create(data);
-            let sha = CryptoJS.SHA256(wordArray).toString();
-
-            if (sha != chunk) {
-              debug("sha", sha, "chunk", chunk);
-
-              reconnect("chunk failed sha check");
+            if (!data) {
+              reconnect("chunk sent empty cell"); // failed to get this chunk from peer
             } else {
-              // Store data in local object
-              BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
-                debug("stored blob", blob.blob_id);
+              let wordArray = CryptoJS.lib.WordArray.create(data);
+              let sha = CryptoJS.SHA256(wordArray).toString();
 
-                ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+              if (sha != chunk) {
+                debug("sha", sha, "chunk", chunk);
 
-                  debug("stored chunk", chunkObj);
+                reconnect("chunk failed sha check");
+              } else {
+                // Store data in local object
+                BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
+                  debug("stored blob", blob.blob_id);
 
-                  releaseDownload(pool_id, chunk);
-                  downloadPromises[pool_id][chunk].resolve(chunk);
+                  ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+
+                    debug("stored chunk", chunkObj);
+
+                    releaseDownload(pool_id, chunk);
+                    downloadPromises[pool_id][chunk].resolve(chunk);
+                  });
                 });
-              });
+              }
             }
           }
-        }
-      });
-  
-      // When we connect, let's ask for a chunk immediately
-      conn.on('open', () => {
-        conn.send([pool_id,chunk]);
-      });
+        });
+    
+        // When we connect, let's ask for a chunk immediately
+        conn.on('open', () => {
+          conn.send([pool_id,chunk]);
+        });
 
-      // TODO: If we can't disconnect, inform server?
+        // TODO: If we can't disconnect, inform server?
+      }
     }
   }
 }

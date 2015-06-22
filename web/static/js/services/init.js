@@ -12,37 +12,41 @@ let socket = null;
 
 // Runs initializaiton code to connect to a peer group
 function init() {
-  trace("initializing environment", env.prod ? "prod" : "dev");
+  return new Promise((resolve, reject) => {
+    trace("initializing environment", env.prod ? "prod" : "dev");
 
-  db.init(); // connect to database
+    db.init(); // connect to database
 
-  socket = new Phoenix.Socket(ENDPOINT);
+    socket = new Phoenix.Socket(ENDPOINT);
 
-  Peer.init(); // initialize ourselves as a peer
+    Peer.init().catch((error) => {
+      reject(error);
+    }); // initialize ourselves as a peer
 
-  trace("peer", Peer.peer_id, "online...");
+    trace("peer", Peer.peer_id, "online...");
 
-  socket.connect(); // connect to web socket
+    socket.connect(); // connect to web socket
 
-  Pool.refresh(socket, Peer.peer_id); // tell server about any pools we know about
+    Pool.refresh(socket, Peer.peer_id); // tell server about any pools we know about
 
-  debug("ready..."); // and we're good to go
+    debug("ready..."); // and we're good to go
 
-  // Handy debug function if we need to see what's going on
-  window.fuego = function() {
-    return {
-      peer: Peer,
-      db: {
-        peer_id: Peer.peer_id,
-        server: db.getServer(),
-        pools: db.getServer().then((server) => { return server.pools.query().all().execute().then(x => {trace("pools",x)}) }),
-        chunks: db.getServer().then((server) => { return server.chunks.query().all().execute().then(x => {trace("chunks",x)}) }),
-        blobs: db.getServer().then((server) => { return server.blobs.query().all().execute().then(x => {trace("blobs",x)}) })
-      },
-      downloads: Chunks.getActiveDownloads(),
-      queue: Chunks.getDownloadQueue(),
+    // Handy debug function if we need to see what's going on
+    window.fuego = function() {
+      return {
+        peer: Peer,
+        db: {
+          peer_id: Peer.peer_id,
+          server: db.getServer(),
+          pools: db.getServer().then((server) => { return server.pools.query().all().execute().then(x => {trace("pools",x)}) }),
+          chunks: db.getServer().then((server) => { return server.chunks.query().all().execute().then(x => {trace("chunks",x)}) }),
+          blobs: db.getServer().then((server) => { return server.blobs.query().all().execute().then(x => {trace("blobs",x)}) })
+        },
+        downloads: Chunks.getActiveDownloads(),
+        queue: Chunks.getDownloadQueue(),
+      };
     };
-  };
+  });
 }
 
 let Init = {

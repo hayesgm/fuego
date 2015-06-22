@@ -18,7 +18,7 @@ import Actions from 'actions/actions';
 import Pool from 'services/pool'
 import Init from 'services/init';
 
-Init.init(); // initialize
+let pError = Init.init(); // initialize
 let socket = Init.socket(); // this needs to come after init is called
 let peer_id = Init.peer_id;
 
@@ -42,6 +42,11 @@ class App extends React.Component {
 
     // Initial load
     this.onPoolChange();
+
+    pError.catch((error) => {
+      console.log("danger!");
+      this.setState({fatal: error});
+    });
   }
 
   componentWillUnmount() {
@@ -123,16 +128,30 @@ class App extends React.Component {
   }
 
   render () {
-    return (
-      <div className="full-width">
-        <div className="left">
-          <PoolBar uploadFile={this.uploadFile.bind(this)} pools={this.state.pools} chunks={this.state.chunks}/>
+    console.log(this.state);
+    if (this.state.fatal) {
+      return (
+        <div className="full-width">
+          <div className="left">
+            <PoolBar uploadFile={function() {}} pools={[]} chunks={[]}/>
+          </div>
+          <div className="right" id="main">
+            <div className="pool-error">{this.state.fatal}</div>
+          </div>
         </div>
-        <div className="right" id="main">
-          <RouteHandler fetchPool={this.fetchPool} deletePool={this.deletePool.bind(this)} pools={this.state.pools} chunks={this.state.chunks} poolsLoaded={this.state.poolsLoaded} />
+      );
+    } else {
+      return (
+        <div className="full-width">
+          <div className="left">
+            <PoolBar uploadFile={this.uploadFile.bind(this)} pools={this.state.pools} chunks={this.state.chunks}/>
+          </div>
+          <div className="right" id="main">
+            <RouteHandler fetchPool={this.fetchPool} deletePool={this.deletePool.bind(this)} pools={this.state.pools} chunks={this.state.chunks} poolsLoaded={this.state.poolsLoaded} />
+          </div>
         </div>
-      </div>
-    )
+      );
+    }
   }
 }
 

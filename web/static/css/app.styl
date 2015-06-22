@@ -11,16 +11,19 @@ body
 #top
 
   .full-width
+    display: -webkit-flex
     display: flex
 
     min-height: 100vh
 
     .left
       order: -1
+      -webkit-flex: 0 0 20em
       flex: 0 0 20em
       position: relative
 
     .right
+      -webkit-flex: 1
       flex: 1
 
 
@@ -31,7 +34,9 @@ body
   min-height: 100%
   width: 100%
   position: absolute
+  display: -webkit-flex;
   display: flex
+  -webkit-flex-direction: column
   flex-direction: column
   justify-content: space-between
 
@@ -107,12 +112,15 @@ body
     width: 100%
 
 .rgChart
+  display: -webkit-flex
   display: flex
+  -webkit-flex-flow: row
   flex-flow: row
   width: 200px
 
   div
     height: 10px
+    -webkit-flex: 1 100%
     flex: 1 100%
 
     &.green
@@ -136,8 +144,11 @@ body
     overflow: hidden
 
 .pool-view
+  display: -webkit-flex;
   display: flex
+  -webkit-flex: 1
   flex: 1
+  -webkit-flex-flow: column
   flex-direction: column
 
   // .pool-info
@@ -148,6 +159,7 @@ body
 
   .pool-view-header
     order: -1
+    -webkit-flex: 1
     flex: 1
     
 
@@ -157,12 +169,15 @@ body
 
   .cinema
     order: 1
+    -webkit-flex: 1
     flex: 1
     margin-top: 10px
     width: 100%
     min-height: 100px
+    display: -webkit-flex
     display: flex
     align-items: center
+    -webkit-flex-direction: row
     flex-direction: row
 
     .loading
