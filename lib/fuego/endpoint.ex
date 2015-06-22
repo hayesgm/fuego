@@ -7,7 +7,7 @@ defmodule Fuego.Endpoint do
   # when deploying your static files in production.
   plug Plug.Static,
     at: "/", from: :fuego, gzip: false,
-    only: ~w(css images js favicon.ico robots.txt)
+    only: ~w(css images js favicon.ico favicon-16x16.png favicon-32x32.png robots.txt)
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
