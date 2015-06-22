@@ -54,7 +54,11 @@ exports.config = {
     }
   },
 
-  sourceMaps: true,
+  overrides: {
+    production: {
+      sourceMaps: true
+    }
+  },
 
   // Configure your plugins
   plugins: {
