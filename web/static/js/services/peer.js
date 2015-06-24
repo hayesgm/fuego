@@ -16,7 +16,7 @@ let peer = null;
 let activeUploads = [];
 
 const RECONNECTION_TIMEOUT = 10000;
-  
+
 function init(fatal) {
   return new Promise((resolve, reject) => {
     if (env.debug) {
@@ -86,6 +86,8 @@ function init(fatal) {
     peer.on('error', (err) => {
       let match = err.message.match(/peer\s([^\s]+)/i);
 
+      debug('error', err.message, err);
+
       if (err.type == 'browser-incompatible') {
         reject(err.message);
       }
@@ -106,6 +108,16 @@ function init(fatal) {
         trace("peer error", err);
       }
     });
+
+    window.addEventListener("offline", function(e) {
+      debug("offline mode - disconnecting");
+      peer.disconnect();
+    }, false);
+
+    window.addEventListener("online", function(e) {
+      debug("online mode - reconnecting");
+      peer.reconnect();
+    }, false);
   });
 }
 
