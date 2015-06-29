@@ -16,7 +16,7 @@ let peer = null;
 let activeUploads = [];
 
 const RECONNECTION_TIMEOUT = 10000;
-const SELF_HEALING_INTERVAL = 10000;
+const SELF_HEALING_INTERVAL = 30000;
 const SELF_HEALING_TIMEOUT = 10000;
 
 function init(fatal) {
