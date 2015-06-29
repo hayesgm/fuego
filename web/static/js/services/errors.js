@@ -5,7 +5,7 @@ import {logs} from 'services/logging';
 
 function init() {
   // To help us debug, add logs and set release stage if we've included Bugsnag
-  if (typeof(window.Bugsnag !== 'undefined')) {
+  if (typeof(window.Bugsnag) !== 'undefined') {
     Bugsnag.beforeNotify = function(payload, metaData) {
       metaData.logs = {
         trace: logs()
