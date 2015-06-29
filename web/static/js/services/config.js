@@ -1,7 +1,7 @@
 import {env} from 'env';
 
 let Config = {
-  PEER_JS_API_KEY: 'dx24ylo616y9zfr',
+  PEER_JS_API_KEY: 'b05br8u0pnpi7ldi',
   PEER_JS_SERVER: 'fuego-peer-server.herokuapp.com',
   ENDPOINT: env.prod ? "wss://fuego-hgh.herokuapp.com/pm" : "/pm",
   POOL_EXAMPLES: {

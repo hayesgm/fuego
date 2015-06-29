@@ -102,6 +102,7 @@ function download(pool_id, chunk, remotePeerId) {
       if (!force && remotePeerId && badPeers.indexOf(remotePeerId) === -1) {
         badPeers.push(remotePeerId);
         debug("putting bad peer in jail", remotePeerId, "for " + BAD_PEER_TIMEOUT/1000.0 + "seconds...", badPeers);
+        Peer.releaseRemote(remotePeerId);
 
         // Remove bad peers after BAD_PEER_TIMEOUT
         setTimeout(() => {
@@ -152,11 +153,11 @@ function download(pool_id, chunk, remotePeerId) {
 
       // Just ask for the given chunk if we're already connected
       if (remotePeer.open) {
-        remotePeer.send([pool_id,chunk]);
+        remotePeer.send(['download',[pool_id,chunk]]);
       } else {
         // We may still have to wait, though...
         remotePeer.on('open', () => {
-          remotePeer.send([pool_id,chunk]);
+          remotePeer.send(['download',[pool_id,chunk]]);
         });
       }
     } else {
@@ -178,48 +179,55 @@ function download(pool_id, chunk, remotePeerId) {
           reconnect(err);
         });
 
-        conn.on('data', (message) => {
-          let [pool_id, chunk, data] = message;
+        conn.on('data', ([type,args]) => {
+          switch (type) {
+            case 'chunk':
+              let [pool_id, chunk, data] = args;
 
-          debug("rec'd", pool_id, chunk, "from", remotePeerId);
+              debug("rec'd", pool_id, chunk, "from", remotePeerId);
 
-          // track
-          let wasWaitingOnChunk = waiting[pool_id] && ( delete waiting[pool_id][chunk] );
+              // track
+              let wasWaitingOnChunk = waiting[pool_id] && ( delete waiting[pool_id][chunk] );
 
-          if (!wasWaitingOnChunk) {
-            debug("ignoring as we already timed out or pool was removed");
-          } else {
-            if (!data) {
-              reconnect("chunk sent empty cell"); // failed to get this chunk from peer
-            } else {
-              let wordArray = CryptoJS.lib.WordArray.create(data);
-              let sha = CryptoJS.SHA256(wordArray).toString();
-
-              if (sha != chunk) {
-                debug("sha", sha, "chunk", chunk);
-
-                reconnect("chunk failed sha check");
+              if (!wasWaitingOnChunk) {
+                debug("ignoring as we already timed out or pool was removed");
               } else {
-                // Store data in local object
-                BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
-                  debug("stored blob", blob.blob_id);
+                if (!data) {
+                  reconnect("chunk sent empty cell"); // failed to get this chunk from peer
+                } else {
+                  let wordArray = CryptoJS.lib.WordArray.create(data);
+                  let sha = CryptoJS.SHA256(wordArray).toString();
 
-                  ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+                  if (sha != chunk) {
+                    debug("sha", sha, "chunk", chunk);
 
-                    debug("stored chunk", chunkObj);
+                    reconnect("chunk failed sha check");
+                  } else {
+                    // Store data in local object
+                    BlobStore.storeBlob({chunk: chunk, data: data}).then(blob => {
+                      debug("stored blob", blob.blob_id);
 
-                    releaseDownload(pool_id, chunk);
-                    downloadPromises[pool_id][chunk].resolve(chunk);
-                  });
-                });
+                      ChunkStore.storeChunk({pool_id: pool_id, chunk: chunk, blob_id: blob.blob_id}).then(chunkObj => {
+
+                        debug("stored chunk", chunkObj);
+
+                        releaseDownload(pool_id, chunk);
+                        downloadPromises[pool_id][chunk].resolve(chunk);
+                      });
+                    });
+                  }
+                }
               }
-            }
+              break;
+
+            default:
+              trace('unknown chunk message type', type, args);
           }
         });
     
         // When we connect, let's ask for a chunk immediately
         conn.on('open', () => {
-          conn.send([pool_id,chunk]);
+          conn.send(['download',[pool_id,chunk]]);
         });
 
         // TODO: If we can't disconnect, inform server?
