@@ -112,9 +112,11 @@ function init(fatal) {
         errors[remotePeerId] = err;
 
         // Call the error function(s) for this peer
-        errorHandlers[remotePeerId].forEach((errorHandler) => {
-          errorHandler.call(err);
-        });
+        if (errorHandlers[remotePeerId]) {
+          errorHandlers[remotePeerId].forEach((errorHandler) => {
+            errorHandler.call(err);
+          });
+        }
       } else {
         trace("peer error", err);
       }
