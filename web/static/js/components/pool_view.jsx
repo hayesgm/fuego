@@ -115,10 +115,14 @@ export class PoolView extends React.Component {
   }
 
   viewRaw() {
-    debug("view raw", this.state);
-
     this.setState({
       isViewRaw: !this.state.isViewRaw,
+    });
+  }
+
+  viewShare() {
+    this.setState({
+      isViewShare: !this.state.isViewShare,
     });
   }
 
@@ -136,7 +140,17 @@ export class PoolView extends React.Component {
       return (
         <div className="pool-view">
 
-          <PoolViewHeader pool={this.state.pool} chunks={this.state.poolChunks} url={this.state.url} buffers={this.state.buffers} deletePool={this.props.deletePool} viewRaw={this.viewRaw.bind(this)} isViewRaw={this.state.isViewRaw} finished={this.state.finished} />
+          <PoolViewHeader
+            pool={this.state.pool}
+            chunks={this.state.poolChunks}
+            url={this.state.url}
+            buffers={this.state.buffers}
+            deletePool={this.props.deletePool}
+            viewRaw={this.viewRaw.bind(this)}
+            isViewRaw={this.state.isViewRaw}
+            viewShare={this.viewShare.bind(this)}
+            isViewShare={this.state.isViewShare}
+            finished={this.state.finished} />
 
           <PoolViewInfo pool={this.state.pool} percentComplete={this.state.percentComplete} />
 
