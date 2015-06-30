@@ -195,7 +195,7 @@ defmodule Fuego.Pool do
       [{^pool_id, pool}] ->
         Mix.shell.info ""
         Mix.shell.error "Pool #{pool_id}: `#{pool[:description]}`"
-        Mix.shell.info "\tLink: http://dev.burn.pm:7700/fire##{pool_id}"
+        Mix.shell.info "\tLink: http://dev.fuego.link:7700/##{pool_id}"
         Mix.shell.info "\tChunk Size: #{pool[:chunk_size]}B"
         Mix.shell.info "\tTotal Size: #{pool[:total_size]}B"
         Mix.shell.info ""
